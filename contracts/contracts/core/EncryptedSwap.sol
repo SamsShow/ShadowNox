@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 /**
  * @title EncryptedSwap
- * @notice Private swap execution for Shadow Economy
+ * @notice Private swap execution for Shadow Nox
  * @dev Swap intents are encrypted and executed without public visibility
  */
 contract EncryptedSwap {

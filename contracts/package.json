@@ -1,7 +1,7 @@
 {
   "name": "@shadow-economy/contracts",
   "version": "0.1.0",
-  "description": "EVVM smart contracts for Shadow Economy",
+  "description": "EVVM smart contracts for Shadow Nox",
   "main": "index.js",
   "scripts": {
     "compile": "hardhat compile",
@@ -15,7 +15,7 @@
     "evvm",
     "smart-contracts"
   ],
-  "author": "Shadow Economy Team",
+  "author": "Shadow Nox Team",
   "license": "MIT",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",

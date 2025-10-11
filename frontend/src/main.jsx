@@ -1,5 +1,5 @@
 /**
- * Shadow Economy Frontend Entry Point
+ * Shadow Nox Frontend Entry Point
  */
 
 import React from 'react'

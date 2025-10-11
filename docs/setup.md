@@ -1,4 +1,4 @@
-# Shadow Economy Setup Guide
+# Shadow Nox Setup Guide
 
 ## Prerequisites
 

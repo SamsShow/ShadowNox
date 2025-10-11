@@ -1,7 +1,7 @@
 {
   "name": "@shadow-economy/frontend",
   "version": "0.1.0",
-  "description": "Shadow Economy Frontend Dashboard",
+  "description": "Shadow Nox Frontend Dashboard",
   "private": true,
   "type": "module",
   "scripts": {

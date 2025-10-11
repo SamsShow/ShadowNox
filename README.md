@@ -1,4 +1,4 @@
-# Shadow Economy
+# Shadow Nox
 
 > A Privacy-Preserving Parallel DeFi Ecosystem on EVVM
 
@@ -7,7 +7,7 @@
 
 ## Overview
 
-Shadow Economy is a fully encrypted, parallel DeFi layer running inside EVVM's virtual blockchain environment. It introduces end-to-end encrypted transactions, async nonces, and bot-based interaction models to enable provably private financial activity while maintaining aggregate verifiability.
+Shadow Nox is a fully encrypted, parallel DeFi layer running inside EVVM's virtual blockchain environment. It introduces end-to-end encrypted transactions, async nonces, and bot-based interaction models to enable provably private financial activity while maintaining aggregate verifiability.
 
 This creates a "dark-pool-like DeFi" environment—where users can trade, lend, stake, and manage strategies without any public visibility into wallets, trades, or portfolio states.
 

@@ -1,6 +1,6 @@
 /**
  * Dashboard Component
- * Main portfolio view for Shadow Economy
+ * Main portfolio view for Shadow Nox
  */
 
 import { useState } from 'react'
@@ -18,7 +18,7 @@ function Dashboard() {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-white mb-2">
-              🌑 Shadow Economy
+              🌑 Shadow Nox
             </h1>
             <p className="text-gray-400">
               Privacy-Preserving DeFi on EVVM

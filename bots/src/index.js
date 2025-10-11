@@ -1,5 +1,5 @@
 /**
- * Shadow Economy Bots Main Entry Point
+ * Shadow Nox Bots Main Entry Point
  * Initializes WhatsApp and Telegram bots for encrypted transaction relay
  */
 
@@ -16,7 +16,7 @@ dotenv.config();
  * Initialize all bot services
  */
 async function initializeBots() {
-  console.log('🌑 Shadow Economy Bots Starting...\n');
+  console.log('🌑 Shadow Nox Bots Starting...\n');
   
   try {
     // Initialize Lit Protocol client
@@ -39,7 +39,7 @@ async function initializeBots() {
     await initWhatsAppBot();
     console.log('✅ WhatsApp bot running\n');
     
-    console.log('🚀 All systems operational - Shadow Economy bots ready!\n');
+    console.log('🚀 All systems operational - Shadow Nox bots ready!\n');
     console.log('📊 Monitoring for encrypted transaction intents...\n');
     
   } catch (error) {
@@ -50,12 +50,12 @@ async function initializeBots() {
 
 // Handle graceful shutdown
 process.on('SIGINT', () => {
-  console.log('\n🛑 Shutting down Shadow Economy bots...');
+  console.log('\n🛑 Shutting down Shadow Nox bots...');
   process.exit(0);
 });
 
 process.on('SIGTERM', () => {
-  console.log('\n🛑 Shutting down Shadow Economy bots...');
+  console.log('\n🛑 Shutting down Shadow Nox bots...');
   process.exit(0);
 });
 

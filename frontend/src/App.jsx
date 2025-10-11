@@ -1,5 +1,5 @@
 /**
- * Shadow Economy Main App Component
+ * Shadow Nox Main App Component
  */
 
 import { Routes, Route } from 'react-router-dom'

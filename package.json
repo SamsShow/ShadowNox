@@ -20,7 +20,7 @@
     "Encryption",
     "ETHOnline"
   ],
-  "author": "Shadow Economy Team",
+  "author": "Shadow Nox Team",
   "license": "MIT",
   "devDependencies": {
     "eslint": "^8.57.0",

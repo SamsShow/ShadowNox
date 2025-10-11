@@ -1,5 +1,5 @@
 /**
- * Lit Protocol Client for Shadow Economy
+ * Lit Protocol Client for Shadow Nox
  * Handles threshold encryption and decryption
  */
 

@@ -1,7 +1,7 @@
 {
   "name": "@shadow-economy/bots",
   "version": "0.1.0",
-  "description": "Fisher/Relayer bots for Shadow Economy",
+  "description": "Fisher/Relayer bots for Shadow Nox",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
@@ -16,7 +16,7 @@
     "evvm",
     "lit-protocol"
   ],
-  "author": "Shadow Economy Team",
+  "author": "Shadow Nox Team",
   "license": "MIT",
   "dependencies": {
     "whatsapp-web.js": "^1.23.1",

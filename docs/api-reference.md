@@ -1,4 +1,4 @@
-# Shadow Economy API Reference
+# Shadow Nox API Reference
 
 ## Bot Commands
 
@@ -112,7 +112,7 @@ All commands work on both WhatsApp and Telegram interfaces.
 ---
 
 #### `/status`
-**Description**: Check Shadow Economy system status
+**Description**: Check Shadow Nox system status
 
 **Usage**: `/status`
 

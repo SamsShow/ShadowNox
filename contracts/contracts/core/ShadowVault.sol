@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 /**
  * @title ShadowVault
- * @notice Encrypted position storage for Shadow Economy
+ * @notice Encrypted position storage for Shadow Nox
  * @dev All position data is stored as encrypted bytecode
  * Decryption happens off-chain via Lit Protocol
  */

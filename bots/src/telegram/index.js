@@ -1,5 +1,5 @@
 /**
- * Telegram Bot for Shadow Economy
+ * Telegram Bot for Shadow Nox
  * Handles encrypted transaction intents via Telegram
  */
 
@@ -23,7 +23,7 @@ export async function initTelegramBot() {
   // Start command
   telegramBot.start((ctx) => {
     ctx.reply(
-      '🌑 *Welcome to Shadow Economy*\n\n' +
+      '🌑 *Welcome to Shadow Nox*\n\n' +
       'Your private DeFi interface powered by EVVM\n\n' +
       'Available commands:\n' +
       '/swap - Swap tokens privately\n' +
@@ -39,7 +39,7 @@ export async function initTelegramBot() {
   // Help command
   telegramBot.help((ctx) => {
     ctx.reply(
-      '📚 *Shadow Economy Commands*\n\n' +
+      '📚 *Shadow Nox Commands*\n\n' +
       '*Trading:*\n' +
       '/swap <amount> <from> <to> - Private token swap\n' +
       'Example: /swap 1 ETH USDC\n\n' +

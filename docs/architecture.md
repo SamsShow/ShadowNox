@@ -1,8 +1,8 @@
-# Shadow Economy Architecture
+# Shadow Nox Architecture
 
 ## Overview
 
-Shadow Economy is a fully encrypted, parallel DeFi layer running inside EVVM's virtual blockchain environment. It introduces end-to-end encrypted transactions, async nonces, and bot-based interaction models to enable provably private financial activity while maintaining aggregate verifiability.
+Shadow Nox is a fully encrypted, parallel DeFi layer running inside EVVM's virtual blockchain environment. It introduces end-to-end encrypted transactions, async nonces, and bot-based interaction models to enable provably private financial activity while maintaining aggregate verifiability.
 
 ## System Architecture
 
@@ -24,7 +24,7 @@ Every transaction (swap, lend, stake, unwind, etc.) is encrypted client-side wit
 
 Decryption keys are threshold-shared across Lit nodes, ensuring no single entity—including validators—can inspect transaction data.
 
-| Property | Traditional EVM Tx | Shadow Economy Tx |
+| Property | Traditional EVM Tx | Shadow Nox Tx |
 |----------|-------------------|-------------------|
 | Visibility | Public | Encrypted |
 | Validation | Miner/Validator executes | EVVM executes on encrypted bytecode |
@@ -32,7 +32,7 @@ Decryption keys are threshold-shared across Lit nodes, ensuring no single entity
 
 ### 2. Async Nonce Model (Quantum Nonce System)
 
-Traditional blockchains enforce sequential transaction ordering (nonce = 0, 1, 2…). Shadow Economy introduces asynchronous nonces, allowing multiple concurrent transactions from the same address to exist simultaneously.
+Traditional blockchains enforce sequential transaction ordering (nonce = 0, 1, 2…). Shadow Nox introduces asynchronous nonces, allowing multiple concurrent transactions from the same address to exist simultaneously.
 
 **Features:**
 - **Multiple coexisting transactions**: Greater optionality and parallelism
@@ -43,7 +43,7 @@ Transactions are independent branches in "quantum superposition." At settlement,
 
 ### 3. Encrypted Market State
 
-Instead of visible order books or lending pools, Shadow Economy aggregates encrypted activity into zero-knowledge market summaries.
+Instead of visible order books or lending pools, Shadow Nox aggregates encrypted activity into zero-knowledge market summaries.
 
 | Visible On-Chain | Hidden From Public View |
 |------------------|-------------------------|

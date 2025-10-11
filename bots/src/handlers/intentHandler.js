@@ -127,7 +127,7 @@ async function handleWithdraw(userAddress, args) {
 async function handleMetrics(args) {
   // Implementation pending: Fetch aggregate metrics
   
-  return `📊 *Shadow Economy Metrics*\n\n` +
+  return `📊 *Shadow Nox Metrics*\n\n` +
          `Total Liquidity: $X,XXX,XXX\n` +
          `24h Volume: $XXX,XXX\n` +
          `Active Positions: XXX\n` +
@@ -151,7 +151,7 @@ async function handleStatus() {
  * Get help message
  */
 function getHelpMessage() {
-  return `📚 *Shadow Economy Commands*\n\n` +
+  return `📚 *Shadow Nox Commands*\n\n` +
          `*Trading:*\n` +
          `/swap <amount> <from> <to> - Private swap\n` +
          `/lend <amount> <token> - Lend assets\n\n` +

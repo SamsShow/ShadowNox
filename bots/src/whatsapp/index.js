@@ -1,5 +1,5 @@
 /**
- * WhatsApp Bot for Shadow Economy
+ * WhatsApp Bot for Shadow Nox
  * Handles encrypted transaction intents via WhatsApp
  */
 

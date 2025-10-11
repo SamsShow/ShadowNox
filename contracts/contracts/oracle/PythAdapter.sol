@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 /**
  * @title PythAdapter
- * @notice Aggregate price feed adapter for Shadow Economy
+ * @notice Aggregate price feed adapter for Shadow Nox
  * @dev Integrates with Pyth Network for privacy-preserving oracle data
  * Exposes only aggregate metrics, not individual position data
  */

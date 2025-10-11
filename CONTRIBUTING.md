@@ -1,6 +1,6 @@
-# Contributing to Shadow Economy
+# Contributing to Shadow Nox
 
-Thank you for your interest in contributing to Shadow Economy!
+Thank you for your interest in contributing to Shadow Nox!
 
 ## Development Guidelines
 
