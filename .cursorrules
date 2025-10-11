@@ -1,0 +1,37 @@
+# Shadow Economy Development Guidelines
+
+## Commit Strategy
+- Maximum 500 lines of code per commit to comply with ETH Online guidelines
+- Use conventional commit messages: `feat:`, `fix:`, `docs:`, `chore:`
+- Commit frequently with small, atomic changes
+
+## Code Style
+- UI should feel organic and human-designed, not AI-generated
+- Prefer clean, minimal interfaces over complex animations
+- Use clear, descriptive variable names
+- Comment complex cryptographic operations
+
+## Testing Requirements
+- Write tests for all smart contracts before deployment
+- Test bot encryption/decryption flows thoroughly
+- Validate EVVM integration with testnet before mainnet
+
+## Documentation Standards
+- Update README.md when adding new features
+- Document all public contract functions with NatSpec
+- Include setup instructions for new dependencies
+- Keep architecture.md in sync with implementation
+
+## Security Practices
+- Never commit private keys or sensitive credentials
+- Use .env files for configuration (excluded from git)
+- Review all Lit Protocol encryption flows
+- Validate async nonce collision handling
+
+## Development Workflow
+1. Create feature branch from main
+2. Implement with small commits
+3. Test locally with EVVM testnet
+4. Update documentation
+5. Submit PR with clear description
+

@@ -1,0 +1,30 @@
+{
+  "name": "shadow-economy",
+  "version": "0.1.0",
+  "description": "Privacy-Preserving Parallel DeFi Ecosystem on EVVM",
+  "private": true,
+  "workspaces": [
+    "contracts",
+    "bots",
+    "frontend"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "clean": "npm run clean --workspaces && rm -rf node_modules"
+  },
+  "keywords": [
+    "EVVM",
+    "DeFi",
+    "Privacy",
+    "Encryption",
+    "ETHOnline"
+  ],
+  "author": "Shadow Economy Team",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "prettier": "^3.2.5"
+  }
+}
+
