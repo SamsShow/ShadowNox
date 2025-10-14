@@ -1,0 +1,8 @@
+# Package lock files are auto-generated and shouldn't count toward commit limits
+package-lock.json linguist-generated=true
+**/package-lock.json linguist-generated=true
+
+# Mark as binary to reduce diff noise
+package-lock.json -diff
+**/package-lock.json -diff
+
