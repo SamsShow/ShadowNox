@@ -25,6 +25,13 @@
   "devDependencies": {
     "eslint": "^8.57.0",
     "prettier": "^3.2.5"
+  },
+  "dependencies": {
+    "@lit-protocol/auth-helpers": "^8.0.2",
+    "@lit-protocol/constants": "^8.0.2",
+    "@lit-protocol/encryption": "^7.3.1",
+    "@lit-protocol/lit-node-client": "^7.3.1",
+    "nodemon": "^3.1.10",
+    "siwe": "^3.0.0"
   }
 }
-

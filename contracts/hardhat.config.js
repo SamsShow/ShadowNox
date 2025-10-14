@@ -23,6 +23,9 @@ module.exports = {
       chainId: 31337
     }
   },
+  remappings: {
+    "@pythnetwork/": "../../node_modules/@pythnetwork/"
+  },
   paths: {
     sources: "./contracts",
     tests: "./test",

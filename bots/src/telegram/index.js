@@ -5,6 +5,8 @@
 
 import { Telegraf } from 'telegraf';
 import { handleUserIntent } from '../handlers/intentHandler.js';
+import dotenv from 'dotenv';
+dotenv.config();
 
 let telegramBot = null;
 
