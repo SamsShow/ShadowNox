@@ -4,7 +4,11 @@
  */
 
 import { encryptTransaction } from '../encryption/litClient.js';
-import { submitEncryptedTransaction, getAggregateMetrics } from '../evvm/connector.js';
+import { 
+  getEncryptedSwapContract, 
+  getAsyncNonceEngineContract,
+  getEVVMWallet 
+} from '../evvm/connector.js';
 
 /**
  * Handle user intent from any platform
@@ -14,28 +18,24 @@ import { submitEncryptedTransaction, getAggregateMetrics } from '../evvm/connect
 export async function handleUserIntent(intent) {
   const { platform, userAddress, message } = intent;
   
-  // Parse command
   const [command, ...args] = message.split(' ');
   
+  // For testing, we'll use the bot's own wallet address as the user's identity.
+  // In a real app, you would look up the user's registered wallet address here.
+  const evmWallet = getEVVMWallet();
+  const evmAddress = evmWallet.address;
+
   switch (command.toLowerCase()) {
     case '/swap':
-      return await handleSwap(userAddress, args);
+      // Pass the actual EVM address to the handler
+      return await handleSwap(evmAddress, args);
     
     case '/lend':
-      return await handleLend(userAddress, args);
+      return `Lending feature is not yet implemented.`;
     
     case '/portfolio':
-      return await handlePortfolio(userAddress);
-    
-    case '/withdraw':
-      return await handleWithdraw(userAddress, args);
-    
-    case '/metrics':
-      return await handleMetrics(args);
-    
-    case '/status':
-      return await handleStatus();
-    
+       return `Portfolio feature is not yet implemented.`;
+
     case '/help':
       return getHelpMessage();
     
@@ -48,9 +48,6 @@ export async function handleUserIntent(intent) {
  * Handle swap command
  */
 async function handleSwap(userAddress, args) {
-  // Implementation pending: Process swap intent
-  // Example: /swap 1 ETH USDC
-  
   if (args.length < 3) {
     return '❌ Invalid swap format. Usage: /swap <amount> <from> <to>\nExample: /swap 1 ETH USDC';
   }
@@ -58,93 +55,83 @@ async function handleSwap(userAddress, args) {
   const [amount, fromToken, toToken] = args;
   
   console.log(`Processing swap: ${amount} ${fromToken} → ${toToken} for ${userAddress}`);
-  
-  return `🔐 Swap intent received:\n` +
-         `Amount: ${amount} ${fromToken}\n` +
-         `To: ${toToken}\n\n` +
-         `✅ Transaction encrypted and submitted to EVVM\n` +
-         `Your swap will execute privately 🌑`;
+
+  try {
+    const swapData = {
+      action: 'swap',
+      amount,
+      fromToken,
+      toToken,
+      userAddress,
+      timestamp: new Date().toISOString(),
+    };
+
+    // Encrypt the transaction data
+    const { ciphertext, encryptedSymmetricKey, accessControlConditions } = await encryptTransaction(swapData, userAddress);
+    
+    // Convert the ciphertext string to hex format for contract
+    // The ciphertext is already a string, we just need to convert it to hex
+    const encryptedDataHex = '0x' + Buffer.from(ciphertext, 'utf8').toString('hex');
+    
+    // Get contract instances with signer
+    const evmWallet = getEVVMWallet();
+    const encryptedSwapContract = getEncryptedSwapContract().connect(evmWallet);
+    const asyncNonceEngineContract = getAsyncNonceEngineContract().connect(evmWallet);
+    
+    // Get the next async nonce for this user
+    const lastSettled = await asyncNonceEngineContract.getLastSettledNonce(userAddress);
+    const asyncNonce = Number(lastSettled) + 1;
+
+    // Submit the encrypted swap intent to the contract
+    console.log(`📝 Submitting swap intent with async nonce: ${asyncNonce}`);
+    const tx = await encryptedSwapContract.submitSwapIntent(encryptedDataHex, asyncNonce);
+    
+    console.log(`📄 Swap intent submitted to EVVM. Tx hash: ${tx.hash}`);
+    
+    // Wait for transaction confirmation
+    const receipt = await tx.wait();
+    console.log(`✅ Transaction confirmed in block ${receipt.blockNumber}`);
+
+    return `🔐 Swap intent received and encrypted:\n` +
+           `   - Amount: ${amount} ${fromToken} → ${toToken}\n` +
+           `   - Async Nonce: ${asyncNonce}\n` +
+           `   - User: ${userAddress}\n\n` +
+           `✅ Transaction submitted to EVVM for private execution.\n` +
+           `   Tx Hash: \`${tx.hash}\`\n` +
+           `   Block: ${receipt.blockNumber}`;
+
+  } catch (error) {
+    console.error("Error handling swap:", error);
+    
+    // Provide detailed error information
+    let errorMsg = `❌ Swap failed: ${error.message}`;
+    
+    if (error.code === 'INSUFFICIENT_FUNDS') {
+      errorMsg = `❌ Insufficient funds to pay for gas. Please add funds to ${userAddress}`;
+    } else if (error.code === 'NONCE_EXPIRED') {
+      errorMsg = `❌ Nonce expired. Please try again.`;
+    } else if (error.code === 'NETWORK_ERROR') {
+      errorMsg = `❌ Network error. Please check your connection and try again.`;
+    }
+    
+    return errorMsg;
+  }
 }
 
 /**
- * Handle lend command
+ * Handle lend command (placeholder for future implementation)
  */
 async function handleLend(userAddress, args) {
-  // Implementation pending: Process lend intent
-  
-  if (args.length < 2) {
-    return '❌ Invalid lend format. Usage: /lend <amount> <token>\nExample: /lend 1000 USDC';
-  }
-  
-  const [amount, token] = args;
-  
-  console.log(`Processing lend: ${amount} ${token} for ${userAddress}`);
-  
-  return `🔐 Lend intent received:\n` +
-         `Amount: ${amount} ${token}\n\n` +
-         `✅ Position encrypted and created on EVVM\n` +
-         `Your lending is now active 🌑`;
+  // TODO: Implement lending logic
+  return `Lending feature coming soon!`;
 }
 
 /**
- * Handle portfolio query
+ * Handle portfolio command (placeholder for future implementation)
  */
 async function handlePortfolio(userAddress) {
-  // Implementation pending: Decrypt and return portfolio
-  
-  console.log(`Fetching portfolio for ${userAddress}`);
-  
-  return `📊 *Your Private Portfolio*\n\n` +
-         `🔐 All data is encrypted\n\n` +
-         `Positions: Loading...\n` +
-         `Total Value: Loading...\n\n` +
-         `_Use /withdraw to exit positions_`;
-}
-
-/**
- * Handle withdraw command
- */
-async function handleWithdraw(userAddress, args) {
-  // Implementation pending: Process withdrawal
-  
-  if (args.length < 2) {
-    return '❌ Invalid withdraw format. Usage: /withdraw <amount> <token>\nExample: /withdraw 500 USDC';
-  }
-  
-  const [amount, token] = args;
-  
-  console.log(`Processing withdrawal: ${amount} ${token} for ${userAddress}`);
-  
-  return `🔐 Withdrawal initiated:\n` +
-         `Amount: ${amount} ${token}\n\n` +
-         `✅ Processing your encrypted withdrawal\n` +
-         `Funds will arrive shortly 🌑`;
-}
-
-/**
- * Handle metrics query
- */
-async function handleMetrics(args) {
-  // Implementation pending: Fetch aggregate metrics
-  
-  return `📊 *Shadow Nox Metrics*\n\n` +
-         `Total Liquidity: $X,XXX,XXX\n` +
-         `24h Volume: $XXX,XXX\n` +
-         `Active Positions: XXX\n` +
-         `Avg APR: X.XX%\n\n` +
-         `_All individual positions remain private 🌑_`;
-}
-
-/**
- * Handle status check
- */
-async function handleStatus() {
-  return `✅ *System Status*\n\n` +
-         `EVVM: 🟢 Connected\n` +
-         `Lit Protocol: 🟢 Active\n` +
-         `Pyth Oracle: 🟢 Live\n` +
-         `Async Nonce Engine: 🟢 Operational\n\n` +
-         `All systems running normally 🌑`;
+  // TODO: Implement portfolio viewing logic
+  return `Portfolio feature coming soon!`;
 }
 
 /**
@@ -154,13 +141,13 @@ function getHelpMessage() {
   return `📚 *Shadow Nox Commands*\n\n` +
          `*Trading:*\n` +
          `/swap <amount> <from> <to> - Private swap\n` +
-         `/lend <amount> <token> - Lend assets\n\n` +
+         `   Example: /swap 1 ETH USDC\n\n` +
+         `*DeFi:*\n` +
+         `/lend - Lending operations (coming soon)\n\n` +
          `*Portfolio:*\n` +
-         `/portfolio - View your positions\n` +
-         `/withdraw <amount> <token> - Withdraw\n\n` +
+         `/portfolio - View your positions\n\n` +
          `*Info:*\n` +
-         `/metrics - Market metrics\n` +
-         `/status - System status\n\n` +
-         `All transactions are encrypted 🔐`;
+         `/help - This help message`;
 }
 
+export { handleSwap, handleLend, handlePortfolio, getHelpMessage };

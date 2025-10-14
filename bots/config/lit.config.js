@@ -4,7 +4,7 @@
  */
 
 export const litConfig = {
-  network: process.env.LIT_NETWORK || 'cayenne',
+  network: process.env.LIT_NETWORK || 'datil-dev',
   relayApiKey: process.env.LIT_RELAY_API_KEY,
   
   // Lit Protocol settings
