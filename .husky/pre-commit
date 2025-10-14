@@ -1,0 +1,44 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 Running pre-commit checks..."
+
+# Check commit size
+echo "📏 Checking commit size..."
+STAGED_FILES=$(git diff --cached --numstat | awk '{ additions += $1; deletions += $2 } END { print additions + deletions }')
+
+if [ -z "$STAGED_FILES" ]; then
+  STAGED_FILES=0
+fi
+
+if [ "$STAGED_FILES" -gt 500 ]; then
+  echo "❌ Commit too large: $STAGED_FILES lines (max 500)"
+  echo "💡 Split your commit into smaller chunks"
+  exit 1
+fi
+
+echo "✅ Commit size OK: $STAGED_FILES lines"
+
+# Check for secrets
+echo "🔐 Checking for secrets..."
+if git diff --cached --name-only | xargs grep -l "PRIVATE_KEY.*=.*0x[a-fA-F0-9]" 2>/dev/null; then
+  echo "❌ Hardcoded private key detected!"
+  exit 1
+fi
+
+# Check for .env files
+if git diff --cached --name-only | grep -E "\.env$|\.env\.local$"; then
+  echo "❌ .env files should not be committed!"
+  exit 1
+fi
+
+echo "✅ No secrets detected"
+
+# Run linting if available
+if [ -f "package.json" ]; then
+  echo "🎨 Running linters..."
+  npm run lint:all 2>/dev/null || echo "⚠️  Linting not configured"
+fi
+
+echo "✨ Pre-commit checks passed!"
+

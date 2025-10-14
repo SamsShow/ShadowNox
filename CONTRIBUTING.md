@@ -45,6 +45,7 @@ Please review our [.cursorrules](.cursorrules) file for detailed development gui
 3. **Install Dependencies**
    ```bash
    npm install
+   npm run prepare  # Setup git hooks
    ```
 
 4. **Make Changes**
@@ -54,11 +55,13 @@ Please review our [.cursorrules](.cursorrules) file for detailed development gui
 
 5. **Test Your Changes**
    ```bash
-   # Test contracts
-   cd contracts && npm test
+   # Run all validations
+   npm run validate
    
-   # Test frontend
-   cd frontend && npm run dev
+   # Or test individually
+   npm run lint:all    # Lint all code
+   npm run test:all    # Run all tests
+   npm run build       # Build all components
    ```
 
 6. **Commit Changes**
@@ -89,6 +92,28 @@ feat: add encrypted swap functionality
 fix: resolve async nonce collision
 docs: update API reference
 ```
+
+## Automated Quality Checks
+
+This project has automated CI/CD pipelines and pre-commit hooks that enforce:
+
+### Pre-commit Hooks
+Before each commit, the following checks run automatically:
+- ✅ Commit size validation (≤ 500 lines)
+- ✅ Secret detection (no hardcoded keys)
+- ✅ .env file prevention
+- ✅ Conventional commit message format
+
+### GitHub Actions CI/CD
+On push/PR, GitHub Actions will:
+- ✅ Build all components
+- ✅ Run test suites
+- ✅ Lint code (ESLint + Solhint)
+- ✅ Check code coverage
+- ✅ Scan for security issues
+- ✅ Validate documentation
+
+See [CI/CD Guide](docs/ci-cd-guide.md) for details.
 
 ## Security
 

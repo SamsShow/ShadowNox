@@ -11,7 +11,13 @@
   "scripts": {
     "build": "npm run build --workspaces",
     "test": "npm run test --workspaces",
-    "clean": "npm run clean --workspaces && rm -rf node_modules"
+    "test:all": "npm run test --workspaces --if-present",
+    "lint": "eslint .",
+    "lint:all": "npm run lint --workspaces --if-present && npm run lint",
+    "lint:contracts": "cd contracts && solhint 'contracts/**/*.sol'",
+    "clean": "npm run clean --workspaces && rm -rf node_modules",
+    "prepare": "husky install",
+    "validate": "npm run lint:all && npm run test:all && npm run build"
   },
   "keywords": [
     "EVVM",
@@ -24,7 +30,9 @@
   "license": "MIT",
   "devDependencies": {
     "eslint": "^8.57.0",
-    "prettier": "^3.2.5"
+    "prettier": "^3.2.5",
+    "husky": "^8.0.3",
+    "solhint": "^4.1.1"
   },
   "dependencies": {
     "@lit-protocol/auth-helpers": "^8.0.2",

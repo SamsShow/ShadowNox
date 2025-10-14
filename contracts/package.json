@@ -6,8 +6,11 @@
   "scripts": {
     "compile": "hardhat compile",
     "test": "hardhat test",
+    "test:coverage": "hardhat coverage",
     "deploy": "hardhat run scripts/deploy.js",
-    "clean": "hardhat clean && rm -rf artifacts cache"
+    "clean": "hardhat clean && rm -rf artifacts cache",
+    "lint": "solhint 'contracts/**/*.sol'",
+    "lint:fix": "solhint 'contracts/**/*.sol' --fix"
   },
   "keywords": [
     "solidity",
@@ -33,7 +36,8 @@
     "solidity-coverage": "^0.8.16",
     "ts-node": "^10.9.2",
     "typechain": "^8.3.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "solhint": "^4.1.1"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.0.1",

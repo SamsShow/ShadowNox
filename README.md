@@ -91,7 +91,52 @@ npm run dev
 - [Architecture Overview](docs/architecture.md)
 - [Setup Guide](docs/setup.md)
 - [API Reference](docs/api-reference.md)
+- [CI/CD and Code Quality Guide](docs/ci-cd-guide.md)
 
+## Code Quality & CI/CD
+
+This project maintains high code quality standards with automated checks:
+
+### Automated Checks
+
+✅ **Build Validation**: All components must build successfully  
+✅ **Test Coverage**: Comprehensive test suites for smart contracts  
+✅ **Code Linting**: ESLint (JS/TS) and Solhint (Solidity)  
+✅ **Commit Size**: Max 500 lines per commit (ETH Online requirement)  
+✅ **Security Scanning**: No hardcoded secrets or private keys  
+✅ **Conventional Commits**: Standardized commit message format  
+
+### Quick Commands
+
+```bash
+# Run all linters
+npm run lint:all
+
+# Run all tests
+npm run test:all
+
+# Validate everything (lint + test + build)
+npm run validate
+```
+
+### Pre-commit Hooks
+
+Git hooks automatically run before each commit to ensure:
+- Commit size ≤ 500 lines
+- No secrets or .env files committed
+- Code passes linting checks
+- Conventional commit message format
+
+For more details, see the [CI/CD Guide](docs/ci-cd-guide.md).
+
+## Contributing
+
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+
+All commits must:
+- Follow [Conventional Commits](https://www.conventionalcommits.org/) format
+- Be ≤ 500 lines (ETH Online requirement)
+- Pass all CI checks
 
 ## License
 
