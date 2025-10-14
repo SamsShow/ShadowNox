@@ -1,0 +1,245 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  # Job 1: Validate commit size
+  validate-commit:
+    name: Validate Commit Size
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      
+      - name: Check commit size
+        run: |
+          git diff HEAD^ HEAD --stat | tail -n 1 | awk '{
+            additions = $4;
+            deletions = $6;
+            total = additions + deletions;
+            if (total > 500) {
+              print "❌ Commit too large: " total " lines (max 500)";
+              exit 1;
+            } else {
+              print "✅ Commit size OK: " total " lines";
+            }
+          }'
+
+  # Job 2: Smart Contracts
+  contracts:
+    name: Smart Contracts
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./contracts
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: contracts/package-lock.json
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Compile contracts
+        run: npx hardhat compile
+      
+      - name: Run tests
+        run: npm test
+      
+      - name: Check test coverage
+        run: npx hardhat coverage
+      
+      - name: Lint Solidity
+        run: |
+          npm install -g solhint
+          solhint 'contracts/**/*.sol'
+        continue-on-error: true
+
+  # Job 3: Frontend
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Lint code
+        run: npm run lint
+        continue-on-error: true
+      
+      - name: Build frontend
+        run: npm run build
+      
+      - name: Check bundle size
+        run: |
+          SIZE=$(du -sh dist | cut -f1)
+          echo "✅ Bundle size: $SIZE"
+
+  # Job 4: Bots
+  bots:
+    name: Bots
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./bots
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: bots/package-lock.json
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Lint code
+        run: npm run lint
+        continue-on-error: true
+      
+      - name: Run tests
+        run: npm test
+        continue-on-error: true
+
+  # Job 5: Security Checks
+  security:
+    name: Security Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check for secrets
+        run: |
+          echo "🔍 Scanning for potential secrets..."
+          
+          # Check for private keys
+          if grep -r "PRIVATE_KEY" --include="*.js" --include="*.ts" --include="*.sol" --exclude-dir=node_modules .; then
+            echo "⚠️  Warning: Found PRIVATE_KEY references (ensure they're only in .env)"
+          fi
+          
+          # Check for hardcoded secrets
+          if grep -rE "(0x[a-fA-F0-9]{64})" --include="*.js" --include="*.ts" --exclude-dir=node_modules .; then
+            echo "⚠️  Warning: Found potential hardcoded private keys"
+            exit 1
+          fi
+          
+          # Check for API keys
+          if grep -rE "(api[_-]?key|apikey|api[_-]?secret)" --include="*.js" --include="*.ts" --exclude-dir=node_modules --exclude=".env*" . | grep -v "process.env"; then
+            echo "⚠️  Warning: Found potential hardcoded API keys"
+            exit 1
+          fi
+          
+          echo "✅ No obvious secrets found in code"
+      
+      - name: Check .env files are ignored
+        run: |
+          if git ls-files | grep -E "\.env$|\.env\.local$"; then
+            echo "❌ .env files should not be committed!"
+            exit 1
+          fi
+          echo "✅ No .env files in git"
+      
+      - name: Audit npm dependencies
+        run: |
+          cd contracts && npm audit --audit-level=high || true
+          cd ../frontend && npm audit --audit-level=high || true
+          cd ../bots && npm audit --audit-level=high || true
+
+  # Job 6: Code Quality
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check for TODO/FIXME
+        run: |
+          echo "🔍 Checking for TODO/FIXME comments..."
+          grep -rn "TODO\|FIXME" --include="*.js" --include="*.ts" --include="*.jsx" --include="*.sol" --exclude-dir=node_modules . || echo "✅ No TODO/FIXME found"
+        continue-on-error: true
+      
+      - name: Check file naming conventions
+        run: |
+          echo "🔍 Checking file naming conventions..."
+          # Check for spaces in filenames
+          if find . -name "* *" -type f | grep -v node_modules; then
+            echo "❌ Files with spaces found"
+            exit 1
+          fi
+          echo "✅ File naming conventions OK"
+      
+      - name: Validate JSON files
+        run: |
+          echo "🔍 Validating JSON files..."
+          find . -name "*.json" -not -path "*/node_modules/*" -exec sh -c 'python3 -m json.tool {} > /dev/null || (echo "Invalid JSON: {}" && exit 1)' \;
+          echo "✅ All JSON files are valid"
+
+  # Job 7: Documentation
+  documentation:
+    name: Documentation Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check README exists
+        run: |
+          if [ ! -f README.md ]; then
+            echo "❌ README.md is missing"
+            exit 1
+          fi
+          echo "✅ README.md exists"
+      
+      - name: Check documentation structure
+        run: |
+          echo "🔍 Checking documentation..."
+          for file in docs/architecture.md docs/api-reference.md docs/setup.md; do
+            if [ ! -f "$file" ]; then
+              echo "⚠️  Missing: $file"
+            else
+              echo "✅ Found: $file"
+            fi
+          done
+      
+      - name: Check NatSpec comments in contracts
+        run: |
+          echo "🔍 Checking for NatSpec comments..."
+          cd contracts/contracts
+          for file in $(find . -name "*.sol" -not -path "*/mocks/*"); do
+            if grep -q "@notice\|@dev\|@param\|@return" "$file"; then
+              echo "✅ $file has NatSpec comments"
+            else
+              echo "⚠️  $file missing NatSpec comments"
+            fi
+          done
+        continue-on-error: true
+
