@@ -1,6 +1,22 @@
 /**
  * Lit Protocol Configuration
  * Configure threshold encryption and key management
+ * 
+ * ⚠️ IMPORTANT: Lit Protocol encrypts TRANSACTION METADATA ONLY
+ * 
+ * What gets encrypted:
+ * - User balances and portfolio positions
+ * - Trade amounts and counterparties
+ * - Lending/borrowing parameters
+ * - Historical transaction metadata
+ * 
+ * What remains PUBLIC on Arcology:
+ * - Smart contract bytecode (Solidity logic)
+ * - Aggregate protocol metrics
+ * - Market-wide statistics
+ * 
+ * Architecture: Smart contracts execute on Arcology with PUBLIC logic, PRIVATE parameters
+ * Storage: Encrypted metadata stored off-chain (IPFS/Arweave)
  */
 
 export const litConfig = {
@@ -13,8 +29,8 @@ export const litConfig = {
     debug: process.env.NODE_ENV === 'development'
   },
   
-  // Encryption settings
-  chain: 'ethereum',
+  // Encryption settings (for Arcology chain)
+  chain: 'ethereum', // Will be updated when Arcology adds Lit support
   
   // Access control conditions
   defaultAccessControlConditions: [
