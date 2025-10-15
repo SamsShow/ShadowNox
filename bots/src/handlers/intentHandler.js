@@ -1,14 +1,22 @@
 /**
  * User Intent Handler
- * Processes user commands and routes to appropriate handlers
+ * Processes user commands from EVVM Fisher bots and routes to Arcology
+ * 
+ * Flow:
+ * 1. User sends intent via WhatsApp/Telegram to EVVM Fisher bot
+ * 2. EVVM Fisher bot constructs EIP-191 signature
+ * 3. Lit Protocol encrypts transaction metadata (amounts, balances)
+ * 4. EVVM Fisher relays encrypted transaction to Arcology
+ * 5. Arcology executes in parallel (10k-15k TPS)
+ * 6. Result decrypted and returned to user
  */
 
 import { encryptTransaction } from '../encryption/litClient.js';
 import { 
   getEncryptedSwapContract, 
   getAsyncNonceEngineContract,
-  getEVVMWallet 
-} from '../evvm/connector.js';
+  getArcologyWallet 
+} from '../arcology/connector.js';
 
 /**
  * Handle user intent from any platform
@@ -20,15 +28,17 @@ export async function handleUserIntent(intent) {
   
   const [command, ...args] = message.split(' ');
   
-  // For testing, we'll use the bot's own wallet address as the user's identity.
-  // In a real app, you would look up the user's registered wallet address here.
-  const evmWallet = getEVVMWallet();
-  const evmAddress = evmWallet.address;
+  // For testing, we'll use the EVVM Fisher bot's wallet address as the user's identity.
+  // In production, you would:
+  // 1. Link user's messaging account to their EVM address
+  // 2. EVVM Fisher bot constructs EIP-191 signature for relay
+  const arcologyWallet = getArcologyWallet();
+  const arcologyAddress = arcologyWallet.address;
 
   switch (command.toLowerCase()) {
     case '/swap':
-      // Pass the actual EVM address to the handler
-      return await handleSwap(evmAddress, args);
+      // Pass the actual EVM address to the handler (executes on Arcology)
+      return await handleSwap(arcologyAddress, args);
     
     case '/lend':
       return `Lending feature is not yet implemented.`;
@@ -54,7 +64,8 @@ async function handleSwap(userAddress, args) {
   
   const [amount, fromToken, toToken] = args;
   
-  console.log(`Processing swap: ${amount} ${fromToken} → ${toToken} for ${userAddress}`);
+  console.log(`EVVM Fisher Bot: Processing swap ${amount} ${fromToken} → ${toToken} for ${userAddress}`);
+  console.log(`Target: Arcology Parallel Blockchain (10k-15k TPS)`);
 
   try {
     const swapData = {
@@ -66,39 +77,43 @@ async function handleSwap(userAddress, args) {
       timestamp: new Date().toISOString(),
     };
 
-    // Encrypt the transaction data
+    // Encrypt the transaction METADATA (Lit Protocol)
+    // Note: Encrypts user parameters ONLY, NOT smart contract bytecode
+    console.log('🔐 Encrypting swap metadata via Lit Protocol...');
     const { ciphertext, encryptedSymmetricKey, accessControlConditions } = await encryptTransaction(swapData, userAddress);
     
-    // Convert the ciphertext string to hex format for contract
-    // The ciphertext is already a string, we just need to convert it to hex
+    // Convert the ciphertext string to hex format for Arcology contract
     const encryptedDataHex = '0x' + Buffer.from(ciphertext, 'utf8').toString('hex');
     
-    // Get contract instances with signer
-    const evmWallet = getEVVMWallet();
-    const encryptedSwapContract = getEncryptedSwapContract().connect(evmWallet);
-    const asyncNonceEngineContract = getAsyncNonceEngineContract().connect(evmWallet);
+    // Get Arcology contract instances with signer
+    const arcologyWallet = getArcologyWallet();
+    const encryptedSwapContract = getEncryptedSwapContract().connect(arcologyWallet);
+    const asyncNonceEngineContract = getAsyncNonceEngineContract().connect(arcologyWallet);
     
-    // Get the next async nonce for this user
+    // Get the next async nonce for parallel execution on Arcology
     const lastSettled = await asyncNonceEngineContract.getLastSettledNonce(userAddress);
     const asyncNonce = Number(lastSettled) + 1;
 
-    // Submit the encrypted swap intent to the contract
-    console.log(`📝 Submitting swap intent with async nonce: ${asyncNonce}`);
+    // Submit the encrypted swap intent to Arcology contract
+    console.log(`📝 EVVM Fisher Bot: Submitting swap to Arcology (async nonce: ${asyncNonce})`);
+    console.log(`   Execution: Parallel on Arcology (10k-15k TPS)`);
     const tx = await encryptedSwapContract.submitSwapIntent(encryptedDataHex, asyncNonce);
     
-    console.log(`📄 Swap intent submitted to EVVM. Tx hash: ${tx.hash}`);
+    console.log(`📄 Swap intent relayed to Arcology. Tx hash: ${tx.hash}`);
     
-    // Wait for transaction confirmation
+    // Wait for transaction confirmation on Arcology
     const receipt = await tx.wait();
-    console.log(`✅ Transaction confirmed in block ${receipt.blockNumber}`);
+    console.log(`✅ Transaction confirmed on Arcology block ${receipt.blockNumber}`);
 
-    return `🔐 Swap intent received and encrypted:\n` +
+    return `🔐 Swap intent received and encrypted (Lit Protocol):\n` +
            `   - Amount: ${amount} ${fromToken} → ${toToken}\n` +
            `   - Async Nonce: ${asyncNonce}\n` +
            `   - User: ${userAddress}\n\n` +
-           `✅ Transaction submitted to EVVM for private execution.\n` +
+           `✅ Transaction executed on Arcology Parallel Blockchain:\n` +
            `   Tx Hash: \`${tx.hash}\`\n` +
-           `   Block: ${receipt.blockNumber}`;
+           `   Block: ${receipt.blockNumber}\n` +
+           `   Execution: Parallel (10k-15k TPS)\n` +
+           `   Privacy: Metadata encrypted, contract logic public`;
 
   } catch (error) {
     console.error("Error handling swap:", error);

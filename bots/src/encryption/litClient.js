@@ -1,7 +1,26 @@
 /**
- * Lit Protocol Client for Shadow Nox
+ * Lit Protocol Client for Shadow Economy
  * Handles threshold encryption and decryption on the server-side.
- * Fixed to use modern Lit Protocol API (v6+)
+ * 
+ * ⚠️⚠️⚠️ IMPORTANT: ENCRYPTS TRANSACTION METADATA ONLY - NOT CONTRACT BYTECODE ⚠️⚠️⚠️
+ * 
+ * What Gets Encrypted (Lit Protocol):
+ * ✅ User wallet balances and portfolio positions
+ * ✅ Specific trade amounts and counterparties
+ * ✅ Lending/borrowing parameters
+ * ✅ Historical transaction metadata
+ * 
+ * What Remains PUBLIC on Arcology:
+ * ❌ Smart contract bytecode (Solidity logic)
+ * ❌ Aggregate protocol metrics
+ * ❌ Market-wide statistics
+ * 
+ * Architecture:
+ * - Smart contracts execute on Arcology with PUBLIC logic, PRIVATE parameters
+ * - Encrypted data stored off-chain (IPFS/Arweave)
+ * - Decryption via Lit Protocol with user access control conditions
+ * 
+ * Uses modern Lit Protocol API (v6+)
  */
 
 import { LitNodeClient } from '@lit-protocol/lit-node-client';
