@@ -3,9 +3,21 @@ pragma solidity ^0.8.20;
 
 /**
  * @title ShadowVault
- * @notice Encrypted position storage for Shadow Nox
- * @dev All position data is stored as encrypted bytecode.
- * Decryption happens off-chain via Lit Protocol.
+ * @notice Encrypted position storage for Shadow Economy on Arcology
+ * @dev Position metadata stored as encrypted references to off-chain data
+ * 
+ * Deployed on Arcology Parallel Blockchain:
+ * - Stores encrypted position metadata references
+ * - Actual encrypted data stored on IPFS/Arweave
+ * - Lit Protocol handles decryption access control
+ * - Parallel execution for position CRUD operations
+ * 
+ * Privacy Model:
+ * - Position data (balances, assets, values): ENCRYPTED (Lit Protocol → IPFS/Arweave)
+ * - Position count: PUBLIC (on-chain reference)
+ * - Smart contract logic: PUBLIC (Solidity on Arcology)
+ * 
+ * Decryption: Off-chain via Lit Protocol with user access control conditions
  */
 contract ShadowVault {
     // Encrypted position data structure

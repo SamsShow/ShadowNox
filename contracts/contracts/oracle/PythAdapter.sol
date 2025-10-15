@@ -6,9 +6,25 @@ import "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 
 /**
  * @title PythAdapter
- * @notice Aggregate price feed adapter for Shadow Nox.
- * @dev Integrates with Pyth Network for oracle data and stores aggregate metrics
- * updated by a trusted relayer. It does not expose individual position data.
+ * @notice Pyth Pull Oracle integration for Shadow Economy on Arcology
+ * @dev Integrates with Pyth Network via Hermes API for price feeds
+ * 
+ * Deployed on Arcology Parallel Blockchain:
+ * - Pull price feeds from Pyth Hermes API (off-chain)
+ * - Update on-chain via updatePriceFeeds() for Arcology contracts
+ * - Stores aggregate metrics only (individual positions private)
+ * - Parallel execution for multiple oracle updates
+ * 
+ * Pyth Hermes Pull Method Flow:
+ * 1. EVVM Fisher bot fetches latest prices from Hermes API
+ * 2. Bot calls updateAggregateMetrics() with price update data
+ * 3. Contract calls pyth.updatePriceFeeds() to update on-chain
+ * 4. Arcology contracts consume updated prices
+ * 
+ * Privacy Model:
+ * - Aggregate market metrics: PUBLIC (total liquidity, volume)
+ * - Individual positions: PRIVATE (encrypted via Lit Protocol)
+ * - Price feeds: PUBLIC (from Pyth Network)
  */
 contract PythAdapter {
     IPyth public pyth;

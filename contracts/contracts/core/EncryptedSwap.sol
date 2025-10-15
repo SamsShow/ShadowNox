@@ -5,9 +5,20 @@ import "../settlement/AsyncNonceEngine.sol";
 
 /**
  * @title EncryptedSwap
- * @notice Private swap execution for Shadow Nox
- * @dev Swap intents are encrypted and executed without public visibility.
- * This contract interacts with the AsyncNonceEngine to manage parallel intents.
+ * @notice Private swap execution for Shadow Economy on Arcology
+ * @dev Swap intents use client-side metadata encryption (Lit Protocol) for privacy
+ * 
+ * Executes on Arcology Parallel Blockchain:
+ * - 10,000-15,000 TPS throughput for parallel swap execution
+ * - Transaction metadata encrypted via Lit Protocol (off-chain)
+ * - Smart contract logic PUBLIC, user parameters PRIVATE
+ * - Async nonce support for parallel intent submission
+ * - Optimistic concurrency control for conflict-free execution
+ * 
+ * Privacy Model:
+ * - Individual swap details: ENCRYPTED (Lit Protocol → IPFS/Arweave)
+ * - Aggregate volume metrics: PUBLIC (on-chain)
+ * - Smart contract bytecode: PUBLIC (Solidity logic on Arcology)
  */
 contract EncryptedSwap {
     address public owner;

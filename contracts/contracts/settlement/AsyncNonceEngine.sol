@@ -3,9 +3,15 @@ pragma solidity ^0.8.20;
 
 /**
  * @title AsyncNonceEngine
- * @notice Quantum-like nonce management for parallel transaction execution
+ * @notice Quantum-like nonce management for parallel transaction execution on Arcology
  * @dev Enables multiple concurrent transactions from the same address
  * Implements "quantum superposition" for transaction states
+ * 
+ * Deployed on Arcology Parallel Blockchain:
+ * - Compatible with Arcology's optimistic concurrency control
+ * - Leverages storage-slot level conflict resolution
+ * - Supports 10k-15k TPS parallel execution
+ * - Designed for Arcology's Concurrent Library integration
  */
 contract AsyncNonceEngine {
     // Transaction state enum
