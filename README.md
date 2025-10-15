@@ -1,43 +1,48 @@
-# Shadow Nox
+# Shadow Economy
 
-> A Privacy-Preserving Parallel DeFi Ecosystem on EVVM
+> A Privacy-Preserving Parallel DeFi Ecosystem on Arcology
 
 ![ETH Online 2025](https://img.shields.io/badge/ETH%20Online-2025-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 ## Overview
 
-Shadow Nox is a fully encrypted, parallel DeFi layer running inside EVVM's virtual blockchain environment. It introduces end-to-end encrypted transactions, async nonces, and bot-based interaction models to enable provably private financial activity while maintaining aggregate verifiability.
+Shadow Economy is a fully privacy-enabled, high-performance DeFi layer leveraging **Arcology's parallel execution blockchain**. It introduces client-side encrypted transaction metadata, async nonces for parallel execution, and EVVM Fisher bot-based interaction models to enable private financial activity while maintaining aggregate verifiability through Pyth oracle integration.
 
-This creates a "dark-pool-like DeFi" environment—where users can trade, lend, stake, and manage strategies without any public visibility into wallets, trades, or portfolio states.
+This creates a "dark-pool-like DeFi" environment—where users can trade, lend, stake, and manage strategies without public visibility into wallets, trades, or portfolio states, while achieving **10,000-15,000 TPS** through Arcology's parallel processing.
 
 ## Architecture
 
 ```
-User → Fisher Bot → Lit Protocol (Encrypt) → EVVM Executor → Async Nonce Engine
-                                              ↓
-                                           Pyth Oracle (Aggregate Data)
-                                              ↓
-User ← Fisher Bot ← Lit Protocol (Decrypt) ← Result
+User (WhatsApp/Telegram)
+    ↓
+EVVM Fisher Bot (EIP-191 signature) → Lit Protocol (Encrypt Metadata)
+    ↓
+Arcology Parallel Blockchain (10k-15k TPS)
+    ↓
+Pyth Oracle (Pull via Hermes) → Aggregate Data Only
+    ↓
+EVVM Fisher Bot (Decrypt Result) → User
 ```
 
 ## Technology Stack
 
-- **EVVM**: Virtual blockchain execution layer with async nonce support
-- **Lit Protocol**: Distributed encryption and threshold key management
-- **Pyth Network**: Privacy-preserving aggregate oracle data
-- **Node.js**: Bot infrastructure for WhatsApp and Telegram
-- **Hardhat**: Smart contract development and deployment
+- **Arcology**: Parallel blockchain execution layer with 10k-15k TPS and EVM equivalence
+- **EVVM**: Fisher/Relayer bot network with EIP-191 signatures for gasless UX
+- **Lit Protocol**: Distributed encryption for transaction **metadata only** (not contract bytecode)
+- **Pyth Network**: Privacy-preserving aggregate oracle data via Hermes Pull method
+- **Node.js**: Bot infrastructure for WhatsApp, Telegram, and Fisher network
+- **Hardhat**: Smart contract development and Arcology deployment
 - **React**: Frontend dashboard for portfolio management
 
 ## Project Structure
 
 ```
 shadow-economy/
-├── contracts/     # EVVM smart contracts
-├── bots/          # Fisher/Relayer bot implementations
-├── frontend/      # React dashboard
-└── docs/          # Documentation
+├── contracts/         # Smart contracts (deployed on Arcology)
+├── bots/              # EVVM Fisher/Relayer bot implementations
+├── frontend/          # React dashboard
+└── docs/              # Documentation
 ```
 
 ## Quick Start
@@ -46,6 +51,7 @@ shadow-economy/
 
 - Node.js 18+ and npm
 - Git
+- Arcology DevNet access
 
 ### Installation
 
@@ -59,7 +65,7 @@ npm install
 
 # Set up environment variables
 cp bots/.env.example bots/.env
-# Edit bots/.env with your configuration
+# Edit bots/.env with your Arcology and EVVM configuration
 ```
 
 ### Development
@@ -69,7 +75,10 @@ cp bots/.env.example bots/.env
 cd contracts
 npm run compile
 
-# Run bots (development mode)
+# Deploy to Arcology DevNet
+npm run deploy
+
+# Run EVVM Fisher bots (development mode)
 cd bots
 npm run dev
 
@@ -80,18 +89,44 @@ npm run dev
 
 ## Key Features
 
-- **End-to-End Encryption**: All transactions encrypted via Lit Protocol
+- **Parallel Execution**: 10,000-15,000 TPS on Arcology blockchain
+- **Metadata Encryption**: Client-side encryption via Lit Protocol (balances, amounts, positions)
 - **Async Nonce System**: Quantum-like state management for parallel transactions
-- **Bot Interface**: Interact via WhatsApp/Telegram for seamless UX
+- **Fisher Bot Interface**: Interact via WhatsApp/Telegram with EIP-191 signatures
 - **Aggregate Privacy**: Zero-knowledge market summaries protect individual positions
-- **EVVM Native**: Leverages virtual blockchain capabilities for isolated execution
+- **Pull Oracle**: Pyth Hermes API for real-time price feeds
+
+## Architecture Highlights
+
+### Arcology Parallel Execution
+- **10k-15k TPS**: Massive throughput for private DeFi operations
+- **100x Lower Gas**: Significantly reduced transaction costs
+- **Optimistic Concurrency**: Parallel smart contract execution with conflict resolution
+- **EVM Equivalence**: Full compatibility with existing Solidity code
+
+### Lit Protocol Privacy
+- **Metadata-Only Encryption**: Encrypts user data (balances, amounts), NOT contract logic
+- **Off-Chain Storage**: Encrypted data stored on IPFS/Arweave
+- **Threshold Decryption**: 2/3 consensus required for data access
+- **Access Control**: User-controlled decryption permissions
+
+### EVVM Fisher Bots
+- **EIP-191 Signatures**: Secure transaction relay to Arcology
+- **Gasless UX**: Fisher network executes transactions
+- **Multi-Platform**: WhatsApp, Telegram support
+- **Async/Sync Nonces**: Flexible transaction ordering
+
+### Pyth Pull Oracle
+- **Hermes API**: Pull latest price feeds on-demand
+- **Aggregate Metrics**: Market-wide data only (individual positions private)
+- **On-Chain Updates**: `updatePriceFeeds()` for smart contract consumption
 
 ## Documentation
 
 - [Architecture Overview](docs/architecture.md)
 - [Setup Guide](docs/setup.md)
 - [API Reference](docs/api-reference.md)
-- [CI/CD and Code Quality Guide](docs/ci-cd-guide.md)
+- [Migration Guide](MIGRATION.md)
 
 ## Code Quality & CI/CD
 
@@ -127,8 +162,6 @@ Git hooks automatically run before each commit to ensure:
 - Code passes linting checks
 - Conventional commit message format
 
-For more details, see the [CI/CD Guide](docs/ci-cd-guide.md).
-
 ## Contributing
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
@@ -138,7 +171,27 @@ All commits must:
 - Be ≤ 500 lines (ETH Online requirement)
 - Pass all CI checks
 
+## Use Cases
+
+### Private Trading
+Swap tokens without revealing positions using Arcology's parallel execution and Lit Protocol metadata encryption.
+
+### Encrypted Lending
+Lend/borrow assets privately with hidden collateral positions and confidential interest rates.
+
+### Dark Pool Liquidity
+Institutional-grade privacy for large order execution without slippage, powered by 10k-15k TPS.
+
 ## License
 
 MIT License - see LICENSE file for details
 
+---
+
+**Built for ETH Online 2025**
+
+Prize Tracks:
+- 🚀 Arcology: Best Parallel Contracts ($2,500)
+- ⛓️ Pyth: Most Innovative Pull Oracle Use ($1,500)
+- 🎣 EVVM: Best Relayer/Fisher Integration ($500)
+- ⭐ EVVM: Best Async Nonce Implementation ($250)

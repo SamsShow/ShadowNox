@@ -1,4 +1,4 @@
-# Shadow Nox Setup Guide
+# Shadow Economy Setup Guide
 
 ## Prerequisites
 
@@ -36,19 +36,61 @@ npm install
 
 ## Configuration
 
-### EVVM Setup
+### Arcology DevNet Setup
 
-1. Deploy your EVVM virtual blockchain following the [EVVM Quick Start Guide](https://www.evvm.org/)
+1. **Deploy Arcology DevNet** following the [Arcology Quick Start Guide](https://arcology.network/docs)
 
-2. Note your EVVM RPC URL and Chain ID
+2. **Note your Arcology RPC URL and Chain ID**
+   - Local DevNet: `http://localhost:8545` (Chain ID: 1337)
+   - Testnet: Check Arcology documentation for testnet endpoints
+
+3. **Verify EVM Equivalence**
+   ```bash
+   # Test connection
+   curl -X POST http://localhost:8545 \
+     -H "Content-Type: application/json" \
+     -d '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}'
+   ```
 
 ### Lit Protocol Setup
 
 1. Sign up for Lit Protocol access at [developer.litprotocol.com](https://developer.litprotocol.com/)
 
-2. Obtain your Lit Relay API key
+2. Obtain your Lit Relay API key (optional for testnet)
 
-3. Choose your Lit Network (cayenne for development, datil for production)
+3. Choose your Lit Network:
+   - **DatilDev**: Development network (recommended for testing)
+   - **Datil**: Production network
+
+**Important**: Lit Protocol encrypts **transaction metadata only** (user balances, trade amounts, portfolio positions), NOT smart contract bytecode. Smart contracts execute on Arcology with public logic and private parameters.
+
+### Pyth Network Setup (Pull Oracle via Hermes)
+
+1. **Hermes API Access**: Pyth's Hermes provides price feeds via REST API
+   - Hermes Endpoint: `https://hermes.pyth.network`
+   - No API key required for testnet
+
+2. **Price Feed IDs**: Find price feed IDs at [pyth.network/developers/price-feed-ids](https://pyth.network/developers/price-feed-ids)
+   - ETH/USD: `0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace`
+   - BTC/USD: `0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43`
+   - USDC/USD: `0xeaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a`
+
+3. **Configure Pull Method**: 
+   - Fetch from Hermes API
+   - Call `updatePriceFeeds()` on-chain in Arcology
+   - Consume prices in Shadow Economy contracts
+
+### EVVM Fisher Bot Configuration
+
+1. **EVVM Fisher Network**: EVVM provides Fisher/Relayer bots for gasless transaction execution
+
+2. **EIP-191 Signatures**: Fisher bots construct signed messages to relay transactions to Arcology
+
+3. **Bot Wallet**: Create a dedicated wallet for Fisher bot operations
+   ```bash
+   # Generate a new private key (save securely!)
+   openssl rand -hex 32
+   ```
 
 ### Bot Configuration
 
@@ -75,19 +117,28 @@ cp bots/.env.example bots/.env
 Edit `bots/.env` with your configuration:
 
 ```env
-# EVVM Configuration
-EVVM_RPC_URL=<your-evvm-rpc-url>
-EVVM_CHAIN_ID=<your-chain-id>
+# Arcology Configuration (Execution Layer)
+ARCOLOGY_RPC_URL=http://localhost:8545
+ARCOLOGY_CHAIN_ID=1337
 
-# Lit Protocol
-LIT_NETWORK=cayenne
-LIT_RELAY_API_KEY=<your-lit-api-key>
+# Lit Protocol (Metadata Encryption Only)
+LIT_NETWORK=datil-dev
+LIT_RELAY_API_KEY=optional-for-testnet
+
+# Pyth Network (Pull Oracle via Hermes)
+PYTH_HERMES_URL=https://hermes.pyth.network
 
 # Telegram
 TELEGRAM_BOT_TOKEN=<your-telegram-bot-token>
 
-# Bot Wallet
+# EVVM Fisher Bot Wallet
 BOT_PRIVATE_KEY=<your-private-key>
+
+# Contract Addresses (update after Arcology deployment)
+SHADOW_VAULT_ADDRESS=
+ENCRYPTED_SWAP_ADDRESS=
+ASYNC_NONCE_ENGINE_ADDRESS=
+PYTH_ADAPTER_ADDRESS=
 ```
 
 #### Frontend Environment (`frontend/.env`)
@@ -95,8 +146,8 @@ BOT_PRIVATE_KEY=<your-private-key>
 ```bash
 # Create frontend environment file
 cat > frontend/.env << EOF
-VITE_EVVM_RPC_URL=<your-evvm-rpc-url>
-VITE_EVVM_CHAIN_ID=<your-chain-id>
+VITE_ARCOLOGY_RPC_URL=http://localhost:8545
+VITE_ARCOLOGY_CHAIN_ID=1337
 EOF
 ```
 
@@ -109,14 +160,24 @@ cd contracts
 npm run compile
 ```
 
-### Deploy Contracts
+### Deploy Contracts to Arcology
 
-1. Update `contracts/scripts/deploy.js` with your deployment logic (to be implemented)
+1. Update `contracts/hardhat.config.js` with Arcology network configuration:
 
-2. Deploy to EVVM:
+```javascript
+networks: {
+  arcology: {
+    url: process.env.ARCOLOGY_RPC_URL || "http://localhost:8545",
+    chainId: parseInt(process.env.ARCOLOGY_CHAIN_ID || "1337"),
+    accounts: [process.env.DEPLOYER_PRIVATE_KEY]
+  }
+}
+```
+
+2. Deploy to Arcology DevNet:
 
 ```bash
-npm run deploy
+npm run deploy -- --network arcology
 ```
 
 3. Save the deployed contract addresses
@@ -124,13 +185,13 @@ npm run deploy
 4. Update the contract addresses in `bots/.env`:
 
 ```env
-SHADOW_VAULT_ADDRESS=<deployed-address>
-ENCRYPTED_SWAP_ADDRESS=<deployed-address>
-ASYNC_NONCE_ENGINE_ADDRESS=<deployed-address>
-PYTH_ADAPTER_ADDRESS=<deployed-address>
+SHADOW_VAULT_ADDRESS=0x...
+ENCRYPTED_SWAP_ADDRESS=0x...
+ASYNC_NONCE_ENGINE_ADDRESS=0x...
+PYTH_ADAPTER_ADDRESS=0x...
 ```
 
-## Running the Bots
+## Running the EVVM Fisher Bots
 
 ### Start Bot Services
 
@@ -142,6 +203,7 @@ npm start
 On first run:
 - **WhatsApp**: Scan the QR code with your WhatsApp mobile app
 - **Telegram**: Bot will start polling for messages
+- **EVVM Fisher**: Bot wallet will relay transactions to Arcology
 
 ### Test Bot Commands
 
@@ -149,12 +211,24 @@ On first run:
 1. Find your bot on Telegram
 2. Send `/start` to begin
 3. Use `/help` to see available commands
-4. Try `/swap 1 ETH USDC` to test a swap intent
+4. Try `/swap 1 ETH USDC` to test a swap intent (executes on Arcology)
 
 #### WhatsApp
 1. Send a message to your bot's phone number
 2. Use `/help` for commands
 3. Commands are the same as Telegram
+
+### How It Works
+
+```
+User (/swap 1 ETH USDC)
+    → EVVM Fisher Bot constructs EIP-191 signature
+    → Lit Protocol encrypts metadata (amount, tokens)
+    → Arcology executes swap in parallel at 10k-15k TPS
+    → Pyth Hermes updates aggregate volume (individual swap private)
+    → Fisher Bot decrypts result
+    → User receives confirmation
+```
 
 ## Running the Frontend
 
@@ -166,6 +240,15 @@ npm run dev
 ```
 
 The dashboard will open at `http://localhost:3000`
+
+### Configure MetaMask for Arcology
+
+1. Open MetaMask
+2. Add Custom Network:
+   - **Network Name**: Arcology DevNet
+   - **RPC URL**: http://localhost:8545
+   - **Chain ID**: 1337
+   - **Currency Symbol**: ETH
 
 ### Build for Production
 
@@ -182,10 +265,10 @@ Built files will be in `frontend/dist/`
 
 ```
 shadow-economy/
-├── contracts/     # Smart contracts
-├── bots/          # Bot services
-├── frontend/      # Web dashboard
-└── docs/          # Documentation
+├── contracts/         # Smart contracts (deployed on Arcology)
+├── bots/              # EVVM Fisher/Relayer bots
+├── frontend/          # Web dashboard
+└── docs/              # Documentation
 ```
 
 ### Making Changes
@@ -199,10 +282,10 @@ shadow-economy/
 
 3. Test your changes:
    ```bash
-   # Test contracts
+   # Test contracts on Arcology
    cd contracts && npm test
    
-   # Test bots (manual testing recommended)
+   # Test EVVM Fisher bots (manual testing recommended)
    cd bots && npm start
    
    # Test frontend
@@ -211,26 +294,36 @@ shadow-economy/
 
 4. Commit with conventional commit messages:
    ```bash
-   git commit -m "feat: add swap encryption"
-   git commit -m "fix: resolve async nonce collision"
+   git commit -m "feat: add parallel swap execution on Arcology"
+   git commit -m "fix: resolve async nonce collision in Fisher bot"
    ```
 
 ## Testing
 
-### Smart Contract Tests
+### Smart Contract Tests (Arcology Deployment)
 
 ```bash
 cd contracts
 npm test
 ```
 
+Tests verify:
+- Async nonce engine parallel execution
+- Encrypted swap metadata handling
+- Pyth oracle pull integration
+- Arcology optimistic concurrency
+
 ### Bot Testing
 
 Bot testing is primarily manual:
-1. Start the bots
+1. Start the EVVM Fisher bots
 2. Send test commands via Telegram/WhatsApp
-3. Monitor console logs for errors
-4. Verify EVVM transactions
+3. Monitor console logs for:
+   - EIP-191 signature construction
+   - Lit Protocol metadata encryption
+   - Arcology transaction submission
+   - Pyth Hermes API calls
+4. Verify Arcology transactions
 
 ### Frontend Testing
 
@@ -240,23 +333,35 @@ npm run dev
 ```
 
 Manual testing in browser:
-- Connect wallet
-- Test encryption/decryption
-- Verify EVVM connectivity
+- Connect wallet to Arcology
+- Test metadata encryption/decryption via Lit Protocol
+- Verify Arcology parallel execution metrics
+- Test Pyth price feed display
 
 ## Troubleshooting
 
 ### Common Issues
 
-#### "EVVM connection failed"
-- Verify EVVM_RPC_URL is correct
-- Check that EVVM instance is running
+#### "Arcology connection failed"
+- Verify ARCOLOGY_RPC_URL is correct
+- Check that Arcology DevNet instance is running
 - Confirm network connectivity
+- Test with: `curl -X POST <RPC_URL> -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}'`
 
 #### "Lit Protocol initialization failed"
-- Check LIT_RELAY_API_KEY is valid
-- Verify LIT_NETWORK setting
-- Ensure internet connection for Lit nodes
+- Check LIT_NETWORK setting (datil-dev for testing)
+- Verify internet connection for Lit nodes
+- Remember: Lit encrypts METADATA only (balances, amounts), not contract bytecode
+
+#### "Pyth Hermes API error"
+- Verify PYTH_HERMES_URL is correct: `https://hermes.pyth.network`
+- Check price feed IDs are valid
+- Ensure updatePriceFeeds() has sufficient gas
+
+#### "EVVM Fisher bot signature error"
+- Verify BOT_PRIVATE_KEY is set correctly
+- Check EIP-191 signature construction
+- Ensure wallet has funds for Arcology gas
 
 #### "WhatsApp QR code not showing"
 - Clear `bots/sessions/whatsapp` directory
@@ -273,38 +378,75 @@ Manual testing in browser:
 - Review [Architecture Documentation](./architecture.md)
 - Check [API Reference](./api-reference.md)
 - Review code comments in source files
-- Check EVVM documentation at [evvm.org](https://www.evvm.org/)
+- Check Arcology documentation at [arcology.network](https://arcology.network/)
+- EVVM Fisher documentation
+- Pyth Hermes API docs
 
 ## Next Steps
 
-1. **Implement Smart Contract Logic**
-   - Complete ShadowVault encryption logic
-   - Implement EncryptedSwap execution
-   - Build AsyncNonceEngine settlement
-   - Integrate Pyth oracle feeds
+1. **Deploy to Arcology DevNet**
+   - Run deployment script
+   - Verify parallel execution (10k-15k TPS)
+   - Test async nonce branches
 
-2. **Build Bot Functionality**
-   - Complete Lit Protocol encryption
-   - Implement EVVM transaction relay
-   - Add command parsing and validation
-   - Build error handling and retries
+2. **Configure EVVM Fisher Bots**
+   - Implement EIP-191 signature construction
+   - Set up Fisher reward tracking
+   - Test async/sync nonce patterns
 
-3. **Enhance Frontend**
-   - Add wallet connection logic
+3. **Integrate Lit Protocol**
+   - Configure metadata-only encryption
+   - Set up IPFS/Arweave storage
+   - Test access control conditions
+
+4. **Connect Pyth Hermes**
+   - Implement pull oracle flow
+   - Test updatePriceFeeds() on Arcology
+   - Verify aggregate privacy metrics
+
+5. **Enhance Frontend**
+   - Add Arcology wallet connection
    - Implement portfolio decryption
-   - Build transaction submission UI
-   - Add real-time status updates
+   - Build parallel transaction monitoring UI
+   - Display Pyth aggregate metrics
 
 ## Security Checklist
 
 Before deploying to production:
 
-- [ ] All private keys stored securely
+- [ ] All private keys stored securely (never commit to git)
 - [ ] Environment variables never committed to git
-- [ ] Smart contracts audited
-- [ ] Rate limiting implemented on bots
-- [ ] Access control conditions tested
+- [ ] Smart contracts audited for Arcology parallel execution
+- [ ] Rate limiting implemented on EVVM Fisher bots
+- [ ] Lit Protocol access control conditions tested (metadata only)
 - [ ] Encryption/decryption flows validated
-- [ ] EVVM network security configured
-- [ ] Bot authentication mechanisms in place
+- [ ] Arcology network security configured
+- [ ] EVVM Fisher bot authentication mechanisms in place
+- [ ] Pyth Hermes API calls validated
+- [ ] Async nonce collision handling tested
 
+## Performance Benchmarking
+
+### Arcology Parallel Execution Test
+
+```bash
+cd contracts
+./scripts/benchmark-parallel.sh --transactions 10000 --parallel true
+```
+
+Expected Results:
+- TPS: >10,000
+- Conflict Rate: <5% (via optimistic concurrency control)
+- Average Confirmation: <2 seconds
+
+### Pyth Oracle Pull Test
+
+```bash
+cd bots
+node src/oracle/pythHermes.js --test
+```
+
+Expected Results:
+- Hermes API Latency: <500ms
+- On-chain Update Cost: <$0.01
+- Aggregate Privacy: Individual positions hidden
