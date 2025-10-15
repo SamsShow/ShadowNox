@@ -1,6 +1,8 @@
 /**
- * Basic test suite for bot handlers
- * Tests the intent handler and encryption flows
+ * Basic test suite for EVVM Fisher bot handlers
+ * Tests the intent handler and encryption flows for Arcology execution
+ * 
+ * Flow: User → EVVM Fisher Bot → Lit (encrypt) → Arcology (execute)
  */
 
 describe('Intent Handler', () => {
@@ -16,16 +18,25 @@ describe('Intent Handler', () => {
   });
 });
 
-describe('Encryption Flow', () => {
-  test('should have encryption module available', () => {
-    // Placeholder test
+describe('Encryption Flow (Lit Protocol)', () => {
+  test('should encrypt transaction metadata only', () => {
+    // TODO: Test that Lit Protocol encrypts balances, amounts, positions
+    // NOT smart contract bytecode
     expect(true).toBe(true);
   });
 });
 
-describe('EVVM Connector', () => {
-  test('should connect to EVVM network', () => {
-    // Placeholder test
+describe('Arcology Connector', () => {
+  test('should connect to Arcology parallel blockchain', () => {
+    // TODO: Test connection to Arcology (10k-15k TPS)
+    // Verify EVM equivalence and async nonce support
+    expect(true).toBe(true);
+  });
+});
+
+describe('EVVM Fisher Bot', () => {
+  test('should construct EIP-191 signatures', () => {
+    // TODO: Test EIP-191 signature construction for Fisher relay
     expect(true).toBe(true);
   });
 });

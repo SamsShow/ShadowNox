@@ -1,6 +1,14 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
+/**
+ * AsyncNonceEngine Tests
+ * 
+ * Tests async nonce management for Arcology parallel execution
+ * - Quantum-like transaction states
+ * - Parallel transaction execution
+ * - Optimistic concurrency compatibility
+ */
 describe("AsyncNonceEngine", function () {
   let engine;
   let owner;

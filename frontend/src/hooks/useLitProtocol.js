@@ -1,6 +1,17 @@
 /**
  * Lit Protocol Hook
- * Manages Lit Protocol encryption/decryption
+ * Manages Lit Protocol encryption/decryption for Shadow Economy
+ * 
+ * ⚠️ IMPORTANT: Encrypts transaction METADATA only, NOT contract bytecode
+ * 
+ * What gets encrypted:
+ * - User balances and portfolio positions
+ * - Trade amounts and parameters
+ * - Historical transaction metadata
+ * 
+ * What remains public on Arcology:
+ * - Smart contract logic (Solidity code)
+ * - Aggregate market metrics
  */
 
 import { useState, useEffect } from 'react'
@@ -10,9 +21,10 @@ export function useLitProtocol() {
   const [litClient, setLitClient] = useState(null)
 
   useEffect(() => {
-    // Implementation pending: Initialize Lit Protocol client
-    // Will connect to Lit Network
-    // Will set up encryption/decryption capabilities
+    // TODO: Initialize Lit Protocol client
+    // - Connect to Lit Network (DatilDev for testing)
+    // - Set up metadata encryption (balances, amounts)
+    // - Configure IPFS/Arweave storage for encrypted data
     
     const initLit = async () => {
       try {
