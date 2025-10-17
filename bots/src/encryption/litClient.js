@@ -32,7 +32,7 @@ import {
 } from '@lit-protocol/encryption';
 import { LitAbility, LitActionResource } from '@lit-protocol/auth-helpers';
 import { SiweMessage } from 'siwe';
-import { getEVVMWallet } from '../evvm/connector.js';
+import { getArcologyWallet } from '../arcology/connector.js';
 
 let litClient = null;
 
@@ -41,7 +41,7 @@ let litClient = null;
  * This is the modern way to authenticate with Lit Protocol
  */
 async function getSessionSigs() {
-  const wallet = getEVVMWallet();
+  const wallet = getArcologyWallet();
   const address = wallet.address;
   const network = await wallet.provider.getNetwork();
   const chainId = network.chainId;

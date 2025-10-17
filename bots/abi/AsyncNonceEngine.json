@@ -1,0 +1,129 @@
+{
+  "abi": [
+    { "inputs": [], "stateMutability": "nonpayable", "type": "constructor" },
+    { "inputs": [], "name": "AlreadySettled", "type": "error" },
+    { "inputs": [], "name": "InvalidNonce", "type": "error" },
+    { "inputs": [], "name": "NotAuthorized", "type": "error" },
+    { "inputs": [], "name": "NotOwner", "type": "error" },
+    {
+      "anonymous": false,
+      "inputs": [
+        { "indexed": true, "internalType": "address", "name": "sender", "type": "address" },
+        { "indexed": false, "internalType": "uint256", "name": "asyncNonce", "type": "uint256" },
+        { "indexed": false, "internalType": "bytes32", "name": "txHash", "type": "bytes32" }
+      ],
+      "name": "AsyncTxCreated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        { "indexed": true, "internalType": "address", "name": "sender", "type": "address" },
+        { "indexed": false, "internalType": "uint256", "name": "asyncNonce", "type": "uint256" },
+        { "indexed": false, "internalType": "bytes32", "name": "txHash", "type": "bytes32" }
+      ],
+      "name": "AsyncTxDiscarded",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        { "indexed": true, "internalType": "address", "name": "sender", "type": "address" },
+        { "indexed": false, "internalType": "uint256", "name": "asyncNonce", "type": "uint256" },
+        { "indexed": false, "internalType": "bytes32", "name": "txHash", "type": "bytes32" }
+      ],
+      "name": "AsyncTxSettled",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        { "indexed": true, "internalType": "address", "name": "sender", "type": "address" },
+        { "indexed": false, "internalType": "uint256", "name": "settledNonce", "type": "uint256" },
+        { "indexed": false, "internalType": "uint256[]", "name": "discardedNonces", "type": "uint256[]" }
+      ],
+      "name": "QuantumCollapse",
+      "type": "event"
+    },
+    {
+      "inputs": [ { "internalType": "address", "name": "", "type": "address" } ],
+      "name": "authorizedContracts",
+      "outputs": [ { "internalType": "bool", "name": "", "type": "bool" } ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "address", "name": "_sender", "type": "address" },
+        { "internalType": "uint256", "name": "_asyncNonce", "type": "uint256" },
+        { "internalType": "bytes32", "name": "_txHash", "type": "bytes32" }
+      ],
+      "name": "createAsyncBranch",
+      "outputs": [ { "internalType": "bool", "name": "", "type": "bool" } ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "address", "name": "_sender", "type": "address" },
+        { "internalType": "uint256", "name": "_asyncNonce", "type": "uint256" }
+      ],
+      "name": "getAsyncState",
+      "outputs": [
+        {
+          "components": [
+            { "internalType": "address", "name": "sender", "type": "address" },
+            { "internalType": "uint256", "name": "asyncNonce", "type": "uint256" },
+            { "internalType": "bytes32", "name": "txHash", "type": "bytes32" },
+            { "internalType": "enum AsyncNonceEngine.TxState", "name": "state", "type": "uint8" },
+            { "internalType": "uint256", "name": "timestamp", "type": "uint256" },
+            { "internalType": "uint256", "name": "settlementBlock", "type": "uint256" }
+          ],
+          "internalType": "struct AsyncNonceEngine.AsyncTransaction",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [ { "internalType": "address", "name": "_sender", "type": "address" } ],
+      "name": "getLastSettledNonce",
+      "outputs": [ { "internalType": "uint256", "name": "", "type": "uint256" } ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [ { "internalType": "address", "name": "_sender", "type": "address" } ],
+      "name": "hasPendingAsync",
+      "outputs": [ { "internalType": "bool", "name": "", "type": "bool" } ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [ { "internalType": "address", "name": "", "type": "address" } ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "address", "name": "_contract", "type": "address" },
+        { "internalType": "bool", "name": "_isAuthorized", "type": "bool" }
+      ],
+      "name": "setAuthorizedContract",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [ { "internalType": "uint256", "name": "_settlementNonce", "type": "uint256" } ],
+      "name": "settleAsync",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ]
+}

@@ -1,0 +1,132 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_asyncNonceEngineAddress",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    { "inputs": [], "name": "IntentAlreadyProcessed", "type": "error" },
+    { "inputs": [], "name": "IntentNotFound", "type": "error" },
+    { "inputs": [], "name": "NotOwner", "type": "error" },
+    {
+      "anonymous": false,
+      "inputs": [
+        { "indexed": true, "internalType": "bytes32", "name": "intentId", "type": "bytes32" },
+        { "indexed": false, "internalType": "uint256", "name": "timestamp", "type": "uint256" }
+      ],
+      "name": "SwapCancelled",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        { "indexed": true, "internalType": "bytes32", "name": "intentId", "type": "bytes32" },
+        { "indexed": false, "internalType": "uint256", "name": "timestamp", "type": "uint256" }
+      ],
+      "name": "SwapExecuted",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        { "indexed": true, "internalType": "address", "name": "user", "type": "address" },
+        { "indexed": true, "internalType": "bytes32", "name": "intentId", "type": "bytes32" },
+        { "indexed": false, "internalType": "uint256", "name": "asyncNonce", "type": "uint256" },
+        { "indexed": false, "internalType": "uint256", "name": "timestamp", "type": "uint256" }
+      ],
+      "name": "SwapIntentSubmitted",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "asyncNonceEngine",
+      "outputs": [ { "internalType": "contract AsyncNonceEngine", "name": "", "type": "address" } ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [ { "internalType": "bytes32", "name": "_intentId", "type": "bytes32" } ],
+      "name": "cancelSwap",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "bytes32", "name": "_intentId", "type": "bytes32" },
+        { "internalType": "uint256", "name": "_volume", "type": "uint256" }
+      ],
+      "name": "executeSwap",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getAggregateMetrics",
+      "outputs": [
+        { "internalType": "uint256", "name": "volume", "type": "uint256" },
+        { "internalType": "uint256", "name": "count", "type": "uint256" }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [ { "internalType": "bytes32", "name": "_intentId", "type": "bytes32" } ],
+      "name": "getSwapIntent",
+      "outputs": [
+        {
+          "components": [
+            { "internalType": "bytes", "name": "encryptedIntent", "type": "bytes" },
+            { "internalType": "uint256", "name": "timestamp", "type": "uint256" },
+            { "internalType": "uint256", "name": "asyncNonce", "type": "uint256" },
+            { "internalType": "bool", "name": "executed", "type": "bool" },
+            { "internalType": "bool", "name": "cancelled", "type": "bool" }
+          ],
+          "internalType": "struct EncryptedSwap.SwapIntent",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [ { "internalType": "address", "name": "", "type": "address" } ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "bytes", "name": "_encryptedIntent", "type": "bytes" },
+        { "internalType": "uint256", "name": "_asyncNonce", "type": "uint256" }
+      ],
+      "name": "submitSwapIntent",
+      "outputs": [ { "internalType": "bytes32", "name": "", "type": "bytes32" } ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "totalSwapCount",
+      "outputs": [ { "internalType": "uint256", "name": "", "type": "uint256" } ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "totalSwapVolume",
+      "outputs": [ { "internalType": "uint256", "name": "", "type": "uint256" } ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ]
+}
