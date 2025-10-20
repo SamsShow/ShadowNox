@@ -12,15 +12,33 @@ module.exports = {
     }
   },
   networks: {
-    // EVVM virtual blockchain network
+    // Arcology Parallel Blockchain - DevNet
+    arcologyDevnet: {
+      url: process.env.ARCOLOGY_RPC_URL || "http://localhost:8545",
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      chainId: parseInt(process.env.ARCOLOGY_CHAIN_ID || "1234"),
+      timeout: 60000, // Longer timeout for Arcology parallel execution
+      gasPrice: "auto"
+    },
+    // Arcology Parallel Blockchain - Testnet
+    arcologyTestnet: {
+      url: process.env.ARCOLOGY_TESTNET_RPC_URL || "https://testnet-rpc.arcology.network",
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      chainId: 4321, // Arcology Testnet chain ID (example)
+      timeout: 60000,
+      gasPrice: "auto"
+    },
+    // EVVM virtual blockchain network (legacy - for Fisher bot relay only)
     evvm: {
       url: process.env.EVVM_RPC_URL || "http://localhost:8545",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
-      chainId: 1337 // Adjust based on EVVM configuration
+      chainId: 1337 // EVVM Fisher network
     },
     // Local development
     hardhat: {
-      chainId: 31337
+      chainId: 31337,
+      // Increase block gas limit to simulate Arcology's high throughput
+      blockGasLimit: 30000000
     }
   },
   remappings: {
