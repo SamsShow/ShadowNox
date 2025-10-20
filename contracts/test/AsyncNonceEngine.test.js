@@ -127,4 +127,145 @@ describe("AsyncNonceEngine", function () {
       );
     });
   });
+
+  describe("Batch Settlement (Arcology Optimization)", function () {
+    beforeEach(async function () {
+      // Create async branches for both owner and addr1
+      await engine.createAsyncBranch(owner.address, 1, ethers.keccak256(ethers.toUtf8Bytes("owner-tx1")));
+      await engine.createAsyncBranch(owner.address, 2, ethers.keccak256(ethers.toUtf8Bytes("owner-tx2")));
+      
+      await engine.setAuthorizedContract(addr1.address, true);
+      await engine.connect(addr1).createAsyncBranch(addr1.address, 1, ethers.keccak256(ethers.toUtf8Bytes("addr1-tx1")));
+      await engine.connect(addr1).createAsyncBranch(addr1.address, 2, ethers.keccak256(ethers.toUtf8Bytes("addr1-tx2")));
+    });
+
+    it("Should batch settle multiple users' async nonces", async function () {
+      const senders = [owner.address, addr1.address];
+      const nonces = [2, 2];
+      
+      // Owner settles their own, addr1 settles their own
+      await expect(engine.batchSettleAsync(senders, nonces))
+        .to.emit(engine, "BatchSettlementCompleted")
+        .withArgs(owner.address, 2, await ethers.provider.getBlock('latest').then(b => b.timestamp + 1));
+      
+      // Verify both settled
+      expect(await engine.getLastSettledNonce(owner.address)).to.equal(2);
+      expect(await engine.getLastSettledNonce(addr1.address)).to.equal(2);
+    });
+
+    it("Should skip already settled nonces in batch", async function () {
+      // Settle owner's nonce 2 first
+      await engine.settleAsync(2);
+      
+      const senders = [owner.address, addr1.address];
+      const nonces = [2, 2];
+      
+      // Batch should skip owner's already-settled nonce
+      await expect(engine.batchSettleAsync(senders, nonces))
+        .to.not.be.reverted;
+      
+      // addr1's nonce should be settled
+      expect(await engine.getLastSettledNonce(addr1.address)).to.equal(2);
+    });
+
+    it("Should revert with mismatched array lengths", async function () {
+      const senders = [owner.address];
+      const nonces = [1, 2];
+      
+      await expect(engine.batchSettleAsync(senders, nonces))
+        .to.be.revertedWith("Array length mismatch");
+    });
+
+    it("Should revert with empty batch", async function () {
+      await expect(engine.batchSettleAsync([], []))
+        .to.be.revertedWith("Empty batch");
+    });
+  });
+
+  describe("Pending Nonces Query", function () {
+    it("Should return all pending nonces for an address", async function () {
+      await engine.createAsyncBranch(owner.address, 1, ethers.keccak256(ethers.toUtf8Bytes("tx1")));
+      await engine.createAsyncBranch(owner.address, 2, ethers.keccak256(ethers.toUtf8Bytes("tx2")));
+      await engine.createAsyncBranch(owner.address, 3, ethers.keccak256(ethers.toUtf8Bytes("tx3")));
+      
+      const pendingNonces = await engine.getPendingNonces(owner.address);
+      expect(pendingNonces.length).to.equal(3);
+      expect(pendingNonces).to.deep.equal([1n, 2n, 3n]);
+    });
+
+    it("Should return empty array if no pending nonces", async function () {
+      const pendingNonces = await engine.getPendingNonces(owner.address);
+      expect(pendingNonces.length).to.equal(0);
+    });
+
+    it("Should update after settlement", async function () {
+      await engine.createAsyncBranch(owner.address, 1, ethers.keccak256(ethers.toUtf8Bytes("tx1")));
+      await engine.createAsyncBranch(owner.address, 2, ethers.keccak256(ethers.toUtf8Bytes("tx2")));
+      await engine.createAsyncBranch(owner.address, 3, ethers.keccak256(ethers.toUtf8Bytes("tx3")));
+      
+      await engine.settleAsync(2);
+      
+      const pendingNonces = await engine.getPendingNonces(owner.address);
+      expect(pendingNonces.length).to.equal(1);
+      expect(pendingNonces[0]).to.equal(3);
+    });
+  });
+
+  describe("Multiple Contract Authorization", function () {
+    let addr2;
+
+    beforeEach(async function () {
+      [owner, addr1, addr2] = await ethers.getSigners();
+    });
+
+    it("Should allow multiple contracts to be authorized", async function () {
+      await engine.setAuthorizedContract(addr1.address, true);
+      await engine.setAuthorizedContract(addr2.address, true);
+      
+      expect(await engine.authorizedContracts(addr1.address)).to.be.true;
+      expect(await engine.authorizedContracts(addr2.address)).to.be.true;
+    });
+
+    it("Should allow revoking authorization", async function () {
+      await engine.setAuthorizedContract(addr1.address, true);
+      expect(await engine.authorizedContracts(addr1.address)).to.be.true;
+      
+      await engine.setAuthorizedContract(addr1.address, false);
+      expect(await engine.authorizedContracts(addr1.address)).to.be.false;
+    });
+
+    it("Should prevent revoked contract from creating branches", async function () {
+      await engine.setAuthorizedContract(addr1.address, true);
+      await engine.setAuthorizedContract(addr1.address, false);
+      
+      await expect(
+        engine.connect(addr1).createAsyncBranch(addr1.address, 1, ethers.keccak256(ethers.toUtf8Bytes("tx1")))
+      ).to.be.revertedWithCustomError(engine, "NotAuthorized");
+    });
+  });
+
+  describe("Large-Scale Parallel Execution Simulation", function () {
+    it("Should handle 100+ concurrent async nonces", async function () {
+      const numNonces = 100;
+      
+      for (let i = 1; i <= numNonces; i++) {
+        await engine.createAsyncBranch(
+          owner.address,
+          i,
+          ethers.keccak256(ethers.toUtf8Bytes(`tx${i}`))
+        );
+      }
+      
+      expect(await engine.hasPendingAsync(owner.address)).to.be.true;
+      
+      const pendingNonces = await engine.getPendingNonces(owner.address);
+      expect(pendingNonces.length).to.equal(numNonces);
+      
+      // Settle a middle nonce
+      await engine.settleAsync(50);
+      
+      const remainingNonces = await engine.getPendingNonces(owner.address);
+      expect(remainingNonces.length).to.equal(50); // 51-100
+    });
+  });
 });
