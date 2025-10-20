@@ -50,3 +50,7 @@ artifacts/
 .eslintcache
 .turbo
 
+
+# Deployment artifacts
+.env.arcology
+deployments.json
