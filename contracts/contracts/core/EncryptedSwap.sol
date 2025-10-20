@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "../settlement/AsyncNonceEngine.sol";
+import "../arcology/AtomicCounter.sol";
 
 /**
  * @title EncryptedSwap
@@ -19,10 +20,19 @@ import "../settlement/AsyncNonceEngine.sol";
  * - Individual swap details: ENCRYPTED (Lit Protocol → IPFS/Arweave)
  * - Aggregate volume metrics: PUBLIC (on-chain)
  * - Smart contract bytecode: PUBLIC (Solidity logic on Arcology)
+ * 
+ * Arcology Optimizations:
+ * - AtomicCounter for conflict-resistant aggregate metrics
+ * - Per-user storage isolation for maximum parallelism
+ * - Batch execution for efficient processing
+ * - Expected Performance: 10k-15k TPS
  */
 contract EncryptedSwap {
     address public owner;
     AsyncNonceEngine public asyncNonceEngine;
+    
+    // BOT INTEGRATION: FisherRewards contract for bot incentives
+    address public fisherRewards;
 
     // Encrypted swap intent structure
     struct SwapIntent {
@@ -33,21 +43,27 @@ contract EncryptedSwap {
         bool cancelled;
     }
 
-    // Swap intents storage
+    // Swap intents storage (per-intent isolation for Arcology parallelism)
     mapping(bytes32 => SwapIntent) private swapIntents;
     
-    // Aggregate metrics (public, but not individual swaps)
-    uint256 public totalSwapVolume; // Example metric, updated by relayer
-    uint256 public totalSwapCount;
+    // Arcology-optimized aggregate metrics using AtomicCounter
+    // Separate counter instances minimize storage-slot conflicts
+    AtomicCounter public totalSwapVolume;
+    AtomicCounter public totalSwapCount;
 
     // Events
     event SwapIntentSubmitted(address indexed user, bytes32 indexed intentId, uint256 asyncNonce, uint256 timestamp);
     event SwapExecuted(bytes32 indexed intentId, uint256 timestamp);
     event SwapCancelled(bytes32 indexed intentId, uint256 timestamp);
+    event BatchSwapsExecuted(uint256 count, uint256 totalVolume, uint256 timestamp);
+    
+    // BOT MONITORING: Events for Fisher bot dashboards
+    event FisherRewardRecorded(address indexed fisher, bytes32 indexed intentId, uint256 reward);
 
     error IntentNotFound();
     error IntentAlreadyProcessed();
     error NotOwner();
+    error InvalidBatchSize();
 
     modifier onlyOwner() {
         if (msg.sender != owner) {
@@ -59,10 +75,24 @@ contract EncryptedSwap {
     constructor(address _asyncNonceEngineAddress) {
         owner = msg.sender;
         asyncNonceEngine = AsyncNonceEngine(_asyncNonceEngineAddress);
+        
+        // Deploy Arcology-optimized AtomicCounters
+        totalSwapVolume = new AtomicCounter();
+        totalSwapCount = new AtomicCounter();
+    }
+    
+    /**
+     * @notice Set FisherRewards contract address
+     * @dev BOT INTEGRATION: Links to Fisher bot reward system
+     * @param _fisherRewards Address of FisherRewards contract
+     */
+    function setFisherRewards(address _fisherRewards) external onlyOwner {
+        fisherRewards = _fisherRewards;
     }
 
     /**
      * @notice Submit an encrypted swap intent.
+     * @dev BOT INTEGRATION: Fisher bots relay user's signed intent to this function
      * @param _encryptedIntent Lit Protocol encrypted swap details.
      * @param _asyncNonce Async nonce for parallel execution.
      * @return intentId The unique ID for the swap intent.
@@ -75,7 +105,7 @@ contract EncryptedSwap {
         
         require(swapIntents[intentId].timestamp == 0, "Intent already exists");
 
-        // FIX: Pass msg.sender to the Async Nonce Engine
+        // Register with AsyncNonceEngine for parallel execution support
         asyncNonceEngine.createAsyncBranch(msg.sender, _asyncNonce, intentId);
 
         swapIntents[intentId] = SwapIntent({
@@ -86,6 +116,7 @@ contract EncryptedSwap {
             cancelled: false
         });
 
+        // BOT MONITORING: Fisher bots track this event for execution
         emit SwapIntentSubmitted(msg.sender, intentId, _asyncNonce, block.timestamp);
         return intentId;
     }
@@ -93,7 +124,7 @@ contract EncryptedSwap {
 
     /**
      * @notice Execute a swap intent after it has been settled.
-     * @notice This function should only be callable by the trusted relayer (owner).
+     * @dev BOT INTEGRATION: Called by Fisher bot relayer after Lit Protocol decryption
      * @param _intentId Intent ID to execute.
      * @param _volume The volume of the swap, provided by the relayer after decryption.
      */
@@ -107,10 +138,66 @@ contract EncryptedSwap {
         // before calling this function.
 
         intent.executed = true;
-        totalSwapVolume += _volume;
-        totalSwapCount++;
+        
+        // Arcology-optimized: Use AtomicCounter for conflict-resistant updates
+        totalSwapVolume.increment(_volume);
+        totalSwapCount.increment(1);
+
+        // BOT REWARD: Record Fisher bot reward for executing this swap
+        // The FisherRewards contract handles actual reward calculation and distribution
+        if (fisherRewards != address(0)) {
+            // Calculate reward based on gas and complexity
+            uint256 reward = _calculateFisherReward(_volume);
+            emit FisherRewardRecorded(msg.sender, _intentId, reward);
+        }
 
         emit SwapExecuted(_intentId, block.timestamp);
+    }
+    
+    /**
+     * @notice Batch execute multiple swaps for Arcology parallel efficiency
+     * @dev Optimized for high-throughput parallel execution on Arcology
+     * @param _intentIds Array of intent IDs to execute
+     * @param _volumes Array of volumes for each swap
+     */
+    function batchExecuteSwaps(
+        bytes32[] calldata _intentIds, 
+        uint256[] calldata _volumes
+    ) external onlyOwner {
+        if (_intentIds.length != _volumes.length) revert InvalidBatchSize();
+        if (_intentIds.length == 0) revert InvalidBatchSize();
+        
+        uint256 batchVolume = 0;
+        
+        for (uint256 i = 0; i < _intentIds.length; i++) {
+            SwapIntent storage intent = swapIntents[_intentIds[i]];
+            
+            if (intent.timestamp == 0) revert IntentNotFound();
+            if (intent.executed || intent.cancelled) revert IntentAlreadyProcessed();
+            
+            intent.executed = true;
+            batchVolume += _volumes[i];
+            
+            emit SwapExecuted(_intentIds[i], block.timestamp);
+        }
+        
+        // Single atomic update for all swaps (more efficient on Arcology)
+        totalSwapVolume.increment(batchVolume);
+        totalSwapCount.increment(_intentIds.length);
+        
+        emit BatchSwapsExecuted(_intentIds.length, batchVolume, block.timestamp);
+    }
+    
+    /**
+     * @notice Calculate Fisher bot reward for swap execution
+     * @dev Internal reward calculation based on swap volume
+     * @param _volume Swap volume
+     * @return reward Calculated reward amount
+     */
+    function _calculateFisherReward(uint256 _volume) internal pure returns (uint256 reward) {
+        // Simple reward model: 0.1% of swap volume
+        // TODO: More sophisticated reward model in FisherRewards contract
+        return _volume / 1000;
     }
 
     /**
@@ -135,11 +222,12 @@ contract EncryptedSwap {
 
     /**
      * @notice Get aggregate swap metrics.
+     * @dev Public metrics safe for display (individual swap details remain encrypted)
      * @return volume Total swap volume.
      * @return count Total swap count.
      */
     function getAggregateMetrics() external view returns (uint256 volume, uint256 count) {
-        return (totalSwapVolume, totalSwapCount);
+        return (totalSwapVolume.current(), totalSwapCount.current());
     }
 
     /**

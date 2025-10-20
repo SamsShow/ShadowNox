@@ -12,6 +12,11 @@ pragma solidity ^0.8.20;
  * - Leverages storage-slot level conflict resolution
  * - Supports 10k-15k TPS parallel execution
  * - Designed for Arcology's Concurrent Library integration
+ * 
+ * BOT INTEGRATION: Fisher bots use this for parallel transaction relay
+ * - CreateAsyncBranch: Register parallel user transactions
+ * - SettleAsync: Finalize transaction after execution
+ * - Batch operations: Optimize for high-throughput scenarios
  */
 contract AsyncNonceEngine {
     // Transaction state enum
@@ -48,6 +53,9 @@ contract AsyncNonceEngine {
     event AsyncTxSettled(address indexed sender, uint256 asyncNonce, bytes32 txHash);
     event AsyncTxDiscarded(address indexed sender, uint256 asyncNonce, bytes32 txHash);
     event QuantumCollapse(address indexed sender, uint256 settledNonce, uint256[] discardedNonces);
+    
+    // BOT MONITORING: Events for Fisher bot performance tracking
+    event BatchSettlementCompleted(address indexed sender, uint256 count, uint256 timestamp);
 
     error InvalidNonce();
     error AlreadySettled();
@@ -185,5 +193,87 @@ contract AsyncNonceEngine {
 
     function getLastSettledNonce(address _sender) external view returns (uint256) {
         return lastSettledNonce[_sender];
+    }
+    
+    /**
+     * @notice Batch settlement for multiple users (Arcology parallel optimization)
+     * @dev Optimized for Fisher bots settling multiple transactions efficiently
+     * @param _senders Array of sender addresses
+     * @param _settlementNonces Array of nonces to settle for each sender
+     */
+    function batchSettleAsync(
+        address[] calldata _senders,
+        uint256[] calldata _settlementNonces
+    ) external {
+        require(_senders.length == _settlementNonces.length, "Array length mismatch");
+        require(_senders.length > 0, "Empty batch");
+        
+        for (uint256 i = 0; i < _senders.length; i++) {
+            address sender = _senders[i];
+            uint256 nonce = _settlementNonces[i];
+            
+            // Verify caller is authorized to settle for this user
+            // In production, add proper authorization checks
+            require(sender == msg.sender || authorizedContracts[msg.sender], "Not authorized");
+            
+            if (nonce <= lastSettledNonce[sender]) {
+                continue; // Skip already settled nonces
+            }
+            
+            // Simplified settlement logic for batch operations
+            bool settlementNonceFound = false;
+            
+            for (uint j = 0; j < activeNonces[sender].length; j++) {
+                uint256 currentNonce = activeNonces[sender][j];
+                
+                if (currentNonce == nonce) {
+                    AsyncTransaction storage txn = asyncTransactions[sender][currentNonce];
+                    txn.state = TxState.Settled;
+                    txn.settlementBlock = block.number;
+                    settlementNonceFound = true;
+                    emit AsyncTxSettled(sender, currentNonce, txn.txHash);
+                } else if (currentNonce < nonce) {
+                    AsyncTransaction storage txn = asyncTransactions[sender][currentNonce];
+                    txn.state = TxState.Discarded;
+                    txn.settlementBlock = block.number;
+                    emit AsyncTxDiscarded(sender, currentNonce, txn.txHash);
+                }
+            }
+            
+            if (settlementNonceFound) {
+                // Clean up activeNonces array
+                uint256[] memory newActiveNonces = new uint256[](activeNonces[sender].length);
+                uint newIndex = 0;
+                for (uint j = 0; j < activeNonces[sender].length; j++) {
+                    uint256 activeNonce = activeNonces[sender][j];
+                    if(activeNonce > nonce) {
+                        newActiveNonces[newIndex] = activeNonce;
+                        newIndex++;
+                    }
+                }
+                
+                // Resize array
+                uint256[] memory finalActiveNonces = new uint256[](newIndex);
+                for (uint j = 0; j < newIndex; j++) {
+                    finalActiveNonces[j] = newActiveNonces[j];
+                }
+                activeNonces[sender] = finalActiveNonces;
+                
+                lastSettledNonce[sender] = nonce;
+            }
+        }
+        
+        // BOT MONITORING: Track batch settlement performance
+        emit BatchSettlementCompleted(msg.sender, _senders.length, block.timestamp);
+    }
+    
+    /**
+     * @notice Get all pending async nonces for an address
+     * @dev Useful for Fisher bots to track pending transactions
+     * @param _sender Address to query
+     * @return nonces Array of pending async nonces
+     */
+    function getPendingNonces(address _sender) external view returns (uint256[] memory nonces) {
+        return activeNonces[_sender];
     }
 }
