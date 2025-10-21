@@ -1,14 +1,68 @@
 /**
  * Telegram Bot for Shadow Nox
- * Handles encrypted transaction intents via Telegram
+ * Main bot entry point with modular handlers
  */
 
 import { Telegraf } from 'telegraf';
-import { handleUserIntent } from '../handlers/intentHandler.js';
+import { ethers } from 'ethers';
+import fs from 'fs';
+import path from 'path';
 import dotenv from 'dotenv';
+
+// Import handlers
+import { handleDashboardNavigation, getDashboardText, getDashboardKeyboard } from './handlers/dashboard.js';
+import { handleTradeNavigation, handleTradeText } from './handlers/trade.js';
+import { handleLendNavigation, handleLendText } from './handlers/lend.js';
+import { handlePortfolioNavigation } from './handlers/portfolio.js';
+import { handleMarketsNavigation, handleAlertsNavigation } from './handlers/markets.js';
+import { TelegramStateManager } from './stateManager.js';
+import { userWalletManager } from './userWalletManager.js';
+import { handleUserIntent } from '../handlers/intentHandler.js';
+
 dotenv.config();
 
 let telegramBot = null;
+const stateManager = new TelegramStateManager();
+
+/**
+ * Ensure bot wallet exists: use BOT_PRIVATE_KEY if provided,
+ * otherwise generate and persist locally to bots/.bot_wallet.json
+ */
+function ensureBotWallet() {
+  // If already provided via env, nothing to do
+  if (process.env.BOT_PRIVATE_KEY && process.env.BOT_PRIVATE_KEY.trim().length > 0) {
+    const wallet = new ethers.Wallet(process.env.BOT_PRIVATE_KEY.trim());
+    return wallet;
+  }
+
+  const walletFile = path.resolve(process.cwd(), 'bots', '.bot_wallet.json');
+  try {
+    if (fs.existsSync(walletFile)) {
+      const data = JSON.parse(fs.readFileSync(walletFile, 'utf-8'));
+      if (data && data.privateKey) {
+        process.env.BOT_PRIVATE_KEY = data.privateKey;
+        return new ethers.Wallet(data.privateKey);
+      }
+    }
+  } catch (e) {
+    // fall through to generation
+  }
+
+  const newWallet = ethers.Wallet.createRandom();
+  const persisted = {
+    address: newWallet.address,
+    privateKey: newWallet.privateKey,
+    createdAt: new Date().toISOString(),
+  };
+  try {
+    fs.writeFileSync(walletFile, JSON.stringify(persisted, null, 2), { encoding: 'utf-8' });
+    process.env.BOT_PRIVATE_KEY = newWallet.privateKey;
+    console.log(`🆕 Generated bot wallet: ${newWallet.address}\n   Saved to bots/.bot_wallet.json (gitignore recommended)`);
+  } catch (e) {
+    console.warn('Could not persist generated wallet to file. Using in-memory only.');
+  }
+  return newWallet;
+}
 
 /**
  * Initialize Telegram bot
@@ -23,19 +77,23 @@ export async function initTelegramBot() {
   telegramBot = new Telegraf(botToken);
 
   // Start command
-  telegramBot.start((ctx) => {
-    ctx.reply(
-      '🌑 *Welcome to Shadow Nox*\n\n' +
-      'Your private DeFi interface powered by EVVM\n\n' +
-      'Available commands:\n' +
-      '/swap - Swap tokens privately\n' +
-      '/lend - Lend assets\n' +
-      '/portfolio - View your encrypted portfolio\n' +
-      '/withdraw - Withdraw funds\n' +
-      '/help - Show this help message\n\n' +
-      'All transactions are end-to-end encrypted via Lit Protocol 🔐',
-      { parse_mode: 'Markdown' }
-    );
+  telegramBot.start(async (ctx) => {
+    const userId = String(ctx.from.id);
+    
+    // Get or create personal wallet for this user
+    const userWallet = userWalletManager.getOrCreateUserWallet(userId);
+    
+    const dashboardText = getDashboardText(userWallet);
+    const inline_keyboard = getDashboardKeyboard();
+    const markup = { inline_keyboard };
+    
+    await ctx.reply(dashboardText, {
+      parse_mode: 'Markdown',
+      reply_markup: markup,
+    });
+    
+    // Reset view stack for this chat
+    stateManager.resetViewStack(String(ctx.chat.id), { text: dashboardText, markup });
   });
 
   // Help command
@@ -58,18 +116,96 @@ export async function initTelegramBot() {
     );
   });
 
-  // Generic command handler
+  // Callback query handler
+  telegramBot.on('callback_query', async (ctx) => {
+    const data = ctx.update.callback_query?.data;
+    const chatId = String(ctx.chat.id);
+    const userId = String(ctx.from.id);
+    
+    const pushView = (text, markup) => {
+      stateManager.pushView(chatId, text, markup);
+    };
+    
+    const popView = () => {
+      return stateManager.popView(chatId);
+    };
+
+    try {
+      // Try each handler in order
+      let handled = false;
+      
+      // Dashboard handler
+      if (!handled) {
+        handled = await handleDashboardNavigation(ctx, data, pushView, popView);
+      }
+      
+      // Trade handler
+      if (!handled) {
+        handled = await handleTradeNavigation(ctx, data, pushView, popView, stateManager.userStates);
+      }
+      
+      // Lend handler
+      if (!handled) {
+        handled = await handleLendNavigation(ctx, data, pushView, popView, stateManager.userStates);
+      }
+      
+      // Portfolio handler
+      if (!handled) {
+        handled = await handlePortfolioNavigation(ctx, data, pushView, popView);
+      }
+      
+      // Markets handler
+      if (!handled) {
+        handled = await handleMarketsNavigation(ctx, data, pushView, popView);
+      }
+      
+      // Alerts handler
+      if (!handled) {
+        handled = await handleAlertsNavigation(ctx, data, pushView, popView, stateManager.alertsByUserId);
+      }
+      
+      if (!handled) {
+        await ctx.answerCbQuery('Unsupported action');
+      }
+      
+    } catch (err) {
+      console.error('Callback handler error:', err);
+      try { 
+        await ctx.answerCbQuery('Error occurred'); 
+      } catch {}
+    }
+  });
+
+  // Text message handler
   telegramBot.on('text', async (ctx) => {
     try {
-      const userAddress = ctx.from.id.toString();
+      const userId = String(ctx.from.id);
       const messageText = ctx.message.text.trim();
       
-      console.log(`📩 Telegram message from ${userAddress}: ${messageText}`);
+      console.log(`📩 Telegram message from ${userId}: ${messageText}`);
       
-      // Parse and handle user intent
+      // Check if user is in a conversational state
+      const userState = stateManager.getUserState(userId);
+      
+      if (userState) {
+        // Handle conversational flow
+        let handled = false;
+        
+        if (userState.action === 'custom_swap') {
+          handled = await handleTradeText(ctx, messageText, stateManager.pushView.bind(stateManager, String(ctx.chat.id)), stateManager.userStates);
+        } else if (userState.action === 'custom_lend') {
+          handled = await handleLendText(ctx, messageText, stateManager.pushView.bind(stateManager, String(ctx.chat.id)), stateManager.userStates);
+        }
+        
+        if (handled) {
+          return; // Message handled by conversational flow
+        }
+      }
+      
+      // Fall back to generic intent handler
       const response = await handleUserIntent({
         platform: 'telegram',
-        userAddress,
+        userAddress: userId,
         message: messageText
       });
       
@@ -111,4 +247,3 @@ export async function stopTelegramBot() {
     await telegramBot.stop('SIGTERM');
   }
 }
-

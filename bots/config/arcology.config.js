@@ -1,20 +1,10 @@
-/**
- * Arcology Parallel Blockchain Configuration
- * Configure connection to Arcology parallel execution layer
- * 
- * Arcology provides:
- * - 10,000-15,000 TPS throughput
- * - EVM equivalence (100% Solidity compatible)
- * - Optimistic concurrency control
- * - Concurrent Library for parallel smart contracts
- */
 import dotenv from 'dotenv';
 dotenv.config();
 
 export const arcologyConfig = {
   // Arcology RPC endpoint (DevNet or Testnet)
-  rpcUrl: process.env.ARCOLOGY_RPC_URL || 'http://localhost:8545',
-  chainId: parseInt(process.env.ARCOLOGY_CHAIN_ID || '1337'),
+  rpcUrl: process.env.ARCOLOGY_RPC_URL || 'https://testnet.arcology.network',
+  chainId: parseInt(process.env.ARCOLOGY_CHAIN_ID || '118'),
   
   // Contract addresses (update after Arcology deployment)
   contracts: {
@@ -27,17 +17,15 @@ export const arcologyConfig = {
   // Transaction settings for Arcology
   gasLimit: 5000000,
   maxFeePerGas: null, // Auto-detect from Arcology
-  maxPriorityFeePerGas: null, // Auto-detect from Arcology
+  maxPriorityFeePerGas: null, 
   
-  // Async nonce settings (Arcology supports async nonces natively)
+
   maxPendingAsyncTxs: 5,
   asyncTxTimeout: 60000, // 60 seconds
   
-  // Parallel execution settings
   parallelExecutionEnabled: true,
-  optimisticConcurrency: true, // Arcology's default
+  optimisticConcurrency: true,
   
-  // Retry configuration
   retryAttempts: 3,
   retryDelay: 1000 // 1 second
 };

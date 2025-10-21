@@ -36,7 +36,7 @@ module.exports = {
     },
     // Local development
     hardhat: {
-      chainId: 31337,
+      chainId: 118,
       // Increase block gas limit to simulate Arcology's high throughput
       blockGasLimit: 30000000
     }
