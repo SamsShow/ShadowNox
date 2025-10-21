@@ -23,7 +23,7 @@ import "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
  * 
  * Privacy Model:
  * - Aggregate market metrics: PUBLIC (total liquidity, volume)
- * - Individual positions: PRIVATE (encrypted via Lit Protocol)
+ * - Individual positions: PRIVATE (stored as bytes on-chain)
  * - Price feeds: PUBLIC (from Pyth Network)
  */
 contract PythAdapter {
