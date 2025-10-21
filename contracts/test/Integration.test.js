@@ -65,13 +65,30 @@ describe("Integration Tests", function () {
     await pythAdapter.waitForDeployment();
   });
 
+  // Helper to create ABI-encoded intent data
+  function createIntentData(tokenIn, tokenOut, amountIn, minAmountOut, deadline) {
+    return ethers.AbiCoder.defaultAbiCoder().encode(
+      ["address", "address", "uint256", "uint256", "uint256"],
+      [tokenIn, tokenOut, amountIn, minAmountOut, deadline]
+    );
+  }
+
   describe("Full Swap Flow: Submit → Execute → Reward", function () {
-    it("Should complete full encrypted swap flow with Fisher reward", async function () {
-      // 1. User submits encrypted swap intent
-      const encryptedIntent = ethers.toUtf8Bytes("encrypted_swap_data_user1");
+    it("Should complete full private swap flow with Fisher reward", async function () {
+      // 1. User submits private swap intent with ABI-encoded data
+      const TOKEN_IN = "0x1111111111111111111111111111111111111111";
+      const TOKEN_OUT = "0x2222222222222222222222222222222222222222";
+      
+      const intentData = createIntentData(
+        TOKEN_IN,
+        TOKEN_OUT,
+        ethers.parseEther("10"),
+        ethers.parseEther("9.5"),
+        Math.floor(Date.now() / 1000) + 3600
+      );
       const asyncNonce = 1;
       
-      const tx1 = await encryptedSwap.connect(user1).submitSwapIntent(encryptedIntent, asyncNonce);
+      const tx1 = await encryptedSwap.connect(user1).submitSwapIntent(intentData, asyncNonce);
       const receipt1 = await tx1.wait();
       
       // Verify swap intent created
@@ -79,14 +96,14 @@ describe("Integration Tests", function () {
       
       const intentId = ethers.solidityPackedKeccak256(
         ["address", "uint256", "bytes"],
-        [user1.address, asyncNonce, encryptedIntent]
+        [user1.address, asyncNonce, intentData]
       );
       
       // Verify AsyncNonceEngine registered the transaction
       const asyncState = await asyncNonceEngine.getAsyncState(user1.address, asyncNonce);
       expect(asyncState.state).to.equal(0); // Pending
 
-      // 2. Fisher bot executes the swap (after Lit Protocol decryption off-chain)
+      // 2. Fisher bot executes the swap (after processing intent data off-chain)
       const swapVolume = ethers.parseEther("10");
       
       const tx2 = await encryptedSwap.connect(relayer).executeSwap(intentId, swapVolume);

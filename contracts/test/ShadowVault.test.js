@@ -1,23 +1,57 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
+/**
+ * ShadowVault Tests
+ * 
+ * Position Data Format (ABI-encoded):
+ * - asset (address): Position asset address (token/LP token)
+ * - amount (uint256): Position amount
+ * - entryPrice (uint256): Entry price (for P&L calculation)
+ * - timestamp (uint256): Position creation timestamp
+ * 
+ * Example:
+ * const positionData = ethers.AbiCoder.defaultAbiCoder().encode(
+ *   ["address", "uint256", "uint256", "uint256"],
+ *   [asset, amount, entryPrice, timestamp]
+ * );
+ */
+
 describe("ShadowVault", function () {
   let vault;
   let owner;
   let addr1;
+  let MOCK_ASSET; // Mock asset address
 
   beforeEach(async function () {
     [owner, addr1] = await ethers.getSigners();
+    
+    // Mock asset address for testing
+    MOCK_ASSET = "0x3333333333333333333333333333333333333333";
+    
     const ShadowVaultFactory = await ethers.getContractFactory("ShadowVault");
     vault = await ShadowVaultFactory.deploy();
     await vault.waitForDeployment();
   });
 
-  describe("Position Management", function () {
-    it("Should create a new position and emit an event", async function () {
-      const encryptedData = ethers.toUtf8Bytes("encrypted_lending_position_data");
+  // Helper function to create ABI-encoded position data
+  function createPositionData(asset, amount, entryPrice, timestamp) {
+    return ethers.AbiCoder.defaultAbiCoder().encode(
+      ["address", "uint256", "uint256", "uint256"],
+      [asset, amount, entryPrice, timestamp]
+    );
+  }
 
-      await expect(vault.createPosition(encryptedData))
+  describe("Position Management", function () {
+    it("Should create a new position with ABI-encoded data and emit an event", async function () {
+      const positionData = createPositionData(
+        MOCK_ASSET,
+        ethers.parseEther("100"),
+        ethers.parseEther("1.5"),
+        Math.floor(Date.now() / 1000)
+      );
+
+      await expect(vault.createPosition(positionData))
         .to.emit(vault, "PositionCreated")
         .withArgs(owner.address, 0, (await ethers.provider.getBlock('latest')).timestamp + 1);
       
@@ -25,41 +59,76 @@ describe("ShadowVault", function () {
       expect(positionCount).to.equal(1);
     });
 
-    it("Should allow a user to have multiple positions", async function () {
-      const encryptedData1 = ethers.toUtf8Bytes("position1");
-      const encryptedData2 = ethers.toUtf8Bytes("position2");
+    it("Should allow a user to have multiple positions with ABI-encoded data", async function () {
+      const positionData1 = createPositionData(
+        MOCK_ASSET,
+        ethers.parseEther("100"),
+        ethers.parseEther("1.5"),
+        Math.floor(Date.now() / 1000)
+      );
+      
+      const positionData2 = createPositionData(
+        MOCK_ASSET,
+        ethers.parseEther("200"),
+        ethers.parseEther("2.0"),
+        Math.floor(Date.now() / 1000)
+      );
 
-      await vault.createPosition(encryptedData1);
-      await vault.createPosition(encryptedData2);
+      await vault.createPosition(positionData1);
+      await vault.createPosition(positionData2);
 
       const positionCount = await vault.getPositionCount(owner.address);
       expect(positionCount).to.equal(2);
     });
 
-    it("Should retrieve a specific position", async function () {
-      const encryptedData = ethers.toUtf8Bytes("my_encrypted_data");
-      await vault.createPosition(encryptedData);
+    it("Should retrieve a specific position with ABI-encoded data", async function () {
+      const positionData = createPositionData(
+        MOCK_ASSET,
+        ethers.parseEther("50"),
+        ethers.parseEther("1.0"),
+        Math.floor(Date.now() / 1000)
+      );
+      
+      await vault.createPosition(positionData);
 
       const position = await vault.getPosition(owner.address, 0);
-      expect(position.encryptedData).to.equal(ethers.hexlify(encryptedData));
+      expect(position.positionData).to.equal(positionData);
       expect(position.active).to.be.true;
     });
     
-    it("Should update an existing position", async function () {
-        const initialData = ethers.toUtf8Bytes("initial_data");
+    it("Should update an existing position with ABI-encoded data", async function () {
+        const initialData = createPositionData(
+          MOCK_ASSET,
+          ethers.parseEther("100"),
+          ethers.parseEther("1.5"),
+          Math.floor(Date.now() / 1000)
+        );
+        
         await vault.createPosition(initialData);
         
-        const updatedData = ethers.toUtf8Bytes("updated_data");
+        const updatedData = createPositionData(
+          MOCK_ASSET,
+          ethers.parseEther("150"),
+          ethers.parseEther("1.6"),
+          Math.floor(Date.now() / 1000)
+        );
+        
         await expect(vault.updatePosition(0, updatedData))
             .to.emit(vault, "PositionUpdated");
 
         const position = await vault.getPosition(owner.address, 0);
-        expect(position.encryptedData).to.equal(ethers.hexlify(updatedData));
+        expect(position.positionData).to.equal(updatedData);
     });
 
     it("Should close an active position", async function () {
-        const encryptedData = ethers.toUtf8Bytes("active_position");
-        await vault.createPosition(encryptedData);
+        const positionData = createPositionData(
+          MOCK_ASSET,
+          ethers.parseEther("100"),
+          ethers.parseEther("1.5"),
+          Math.floor(Date.now() / 1000)
+        );
+        
+        await vault.createPosition(positionData);
 
         await expect(vault.closePosition(0))
             .to.emit(vault, "PositionClosed");
@@ -76,27 +145,52 @@ describe("ShadowVault", function () {
     });
     
     it("Should revert when trying to update a non-existent position", async function () {
-        const updatedData = ethers.toUtf8Bytes("updated_data");
+        const updatedData = createPositionData(
+          MOCK_ASSET,
+          ethers.parseEther("100"),
+          ethers.parseEther("1.5"),
+          Math.floor(Date.now() / 1000)
+        );
+        
         await expect(vault.updatePosition(0, updatedData))
             .to.be.revertedWithCustomError(vault, "PositionNotFound");
     });
 
-    it("Should prevent a user from accessing another user's position details directly (though data is encrypted)", async function() {
-        const encryptedDataOwner = ethers.toUtf8Bytes("owner_data");
-        await vault.connect(owner).createPosition(encryptedDataOwner);
+    it("Should isolate positions between different users with ABI-encoded data", async function() {
+        const positionDataOwner = createPositionData(
+          MOCK_ASSET,
+          ethers.parseEther("100"),
+          ethers.parseEther("1.5"),
+          Math.floor(Date.now() / 1000)
+        );
+        
+        await vault.connect(owner).createPosition(positionDataOwner);
 
-        const encryptedDataAddr1 = ethers.toUtf8Bytes("addr1_data");
-        await vault.connect(addr1).createPosition(encryptedDataAddr1);
+        const positionDataAddr1 = createPositionData(
+          MOCK_ASSET,
+          ethers.parseEther("200"),
+          ethers.parseEther("2.0"),
+          Math.floor(Date.now() / 1000)
+        );
+        
+        await vault.connect(addr1).createPosition(positionDataAddr1);
 
         const ownerPos = await vault.getPosition(owner.address, 0);
         const addr1Pos = await vault.getPosition(addr1.address, 0);
         
-        expect(ownerPos.encryptedData).to.not.equal(addr1Pos.encryptedData);
+        // Positions should be different (different encoded data)
+        expect(ownerPos.positionData).to.not.equal(addr1Pos.positionData);
     });
     
     it("Should revert when trying to close a position that is already inactive", async function() {
-        const encryptedData = ethers.toUtf8Bytes("some_data");
-        await vault.createPosition(encryptedData);
+        const positionData = createPositionData(
+          MOCK_ASSET,
+          ethers.parseEther("100"),
+          ethers.parseEther("1.5"),
+          Math.floor(Date.now() / 1000)
+        );
+        
+        await vault.createPosition(positionData);
         await vault.closePosition(0); 
         
         await expect(vault.closePosition(0)) 
