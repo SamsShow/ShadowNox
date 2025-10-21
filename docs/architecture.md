@@ -2,9 +2,9 @@
 
 ## Overview
 
-Shadow Economy is a fully privacy-enabled, high-performance DeFi layer leveraging **Arcology's parallel execution blockchain**. It introduces client-side encrypted transaction metadata, async nonces for parallel execution, and EVVM Fisher bot-based interaction models to enable private financial activity while maintaining aggregate verifiability through Pyth oracle integration.
+Shadow Economy is a privacy-preserving, high-performance DeFi layer leveraging **Arcology's parallel execution blockchain**. It features async nonces for parallel execution and EVVM Fisher bot-based interaction models to enable private financial activity while maintaining aggregate verifiability through Pyth oracle integration.
 
-This creates a "dark-pool-like DeFi" environment—where users can trade, lend, stake, and manage strategies without public visibility into wallets, trades, or portfolio states, while achieving **10,000-15,000 TPS** through Arcology's parallel processing.
+This creates a "dark-pool-like DeFi" environment designed for private trading, lending, and strategy management while achieving **10,000-15,000 TPS** through Arcology's parallel processing.
 
 ## System Architecture
 
@@ -12,10 +12,10 @@ This creates a "dark-pool-like DeFi" environment—where users can trade, lend, 
 
 | Layer | Component | Description |
 |-------|-----------|-------------|
-| **Interaction Layer** | EVVM Fisher/Relayer Bots | Secure WhatsApp and Telegram bots that relay encrypted user intents to Arcology blockchain using EIP-191 signatures |
-| **Privacy Layer** | Lit Protocol | Client-side encryption of transaction **metadata only** (balances, amounts, positions) - NOT contract bytecode |
+| **Interaction Layer** | EVVM Fisher/Relayer Bots | Secure WhatsApp and Telegram bots that relay user intents to Arcology blockchain using EIP-191 signatures |
+| **Privacy Layer** | Intent Architecture (MVP) | Privacy-preserving intent storage on-chain as bytes, designed for future encryption enhancement |
 | **Execution Layer** | Arcology Parallel Blockchain | EVM-equivalent parallel blockchain executing thousands of transactions simultaneously at 10k-15k TPS |
-| **Oracle Layer** | Pyth Network (Pull Method) | Provides real-time encrypted market data feeds via Hermes API, with aggregate-only public visibility |
+| **Oracle Layer** | Pyth Network (Pull Method) | Provides real-time market data feeds via Hermes API, with aggregate-only public visibility |
 | **Nonce Management** | Async Nonce Engine | Enables parallel/out-of-order transaction execution without sequential dependency on Arcology |
 
 ## Key Innovations
@@ -34,29 +34,29 @@ Arcology processes transactions in full parallel using multiple EVM instances si
 | Property | Traditional EVM | Shadow Economy on Arcology |
 |----------|----------------|---------------------------|
 | Execution Model | Sequential | Parallel (10k-15k TPS) |
-| Transaction Privacy | Public | Encrypted metadata |
+| Transaction Privacy | Public | Privacy-preserving intents |
 | Gas Costs | High | 100x lower |
 | Concurrency | None | Optimistic concurrency control |
 | MEV Exposure | High | Minimized through parallel execution |
 
-### 2. Client-Side Encryption Architecture (Lit Protocol)
+### 2. Privacy-Preserving Intent Architecture (MVP)
 
-**Critical Design Pattern**: Lit Protocol encrypts only transaction **metadata** and sensitive user data on the client side—**NOT** the executable smart contract bytecode.
+**Design Pattern**: Shadow Economy stores transaction intent data as bytes on-chain for privacy-preserving execution.
 
-**Encryption Flow:**
+**Intent Flow:**
 
-1. **User Side**: User intent (swap amount, lending parameters, portfolio data) is encrypted client-side using Lit Protocol
-2. **Encrypted Metadata Storage**: Encrypted data stored off-chain (IPFS, Arweave) or passed as calldata
-3. **Smart Contract Execution**: Arcology executes standard Solidity contracts with **PUBLIC logic** but **PRIVATE parameters**
-4. **Decryption on Retrieval**: Only authorized users can decrypt their transaction history/portfolio using Lit keys
+1. **User Side**: User intent (swap amount, lending parameters, portfolio data) is prepared as ABI-encoded bytes
+2. **Intent Storage**: Intent data stored on-chain as bytes in Arcology contracts
+3. **Smart Contract Execution**: Arcology executes standard Solidity contracts with PUBLIC logic, intent data stored as bytes
+4. **Future Enhancement**: Full encryption layer planned for production with off-chain privacy
 
-**What Gets Encrypted:**
-✅ User wallet balances and portfolio states  
-✅ Specific trade amounts and counterparties  
-✅ Lending/borrowing positions  
-✅ Historical transaction metadata  
+**Privacy Features (MVP):**
+✅ Intent data stored as bytes (not human-readable by default)  
+✅ Aggregate metrics publicly visible  
+✅ Individual positions remain private  
+✅ Architecture ready for encryption enhancement  
 
-**What Remains Unencrypted (On-Chain):**
+**What Remains Public:**
 ✅ Smart contract logic (Solidity code)  
 ✅ Aggregate liquidity metrics  
 ✅ Total protocol TVL  
@@ -64,9 +64,9 @@ Arcology processes transactions in full parallel using multiple EVM instances si
 
 | Visibility Level | Data Type | Storage Location |
 |-----------------|-----------|-----------------|
-| Private | Individual user balances | Encrypted (Lit Protocol → IPFS/Arweave) |
-| Private | Specific trade details | Encrypted (Lit Protocol → IPFS/Arweave) |
-| Private | Personal portfolio snapshots | Encrypted (Lit Protocol → IPFS/Arweave) |
+| Private (MVP) | Individual user intents | On-chain as bytes (Arcology) |
+| Private (MVP) | Specific trade details | On-chain as bytes (Arcology) |
+| Private (MVP) | Personal portfolio data | On-chain as bytes (Arcology) |
 | Public | Aggregate TVL | On-chain (Arcology) |
 | Public | Smart contract code | On-chain (Arcology) |
 | Public | Market-wide volume | Pyth Oracle feeds |
@@ -85,10 +85,10 @@ EVVM Fisher bots serve as the interaction layer, relaying user intents from mess
 ```
 User Intent (WhatsApp/Telegram)
     → EVVM Fisher Bot (EIP-191 signature construction)
-    → Lit Protocol (encrypt metadata)
+    → Intent Processing (ABI-encode parameters)
     → Arcology Blockchain (parallel execution)
     → Pyth Hermes (aggregate price feeds)
-    → Fisher Bot (decrypt result)
+    → Fisher Bot (process result)
     → User Confirmation
 ```
 

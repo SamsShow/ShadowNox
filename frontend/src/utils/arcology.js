@@ -86,26 +86,26 @@ export async function addArcologyNetwork() {
 }
 
 /**
- * Submit encrypted transaction to Arcology parallel blockchain
+ * Submit private transaction to Arcology parallel blockchain
  * 
- * Note: Transaction metadata is encrypted via Lit Protocol off-chain
- * Smart contracts execute on Arcology with PUBLIC logic, PRIVATE parameters
+ * Note: Transaction metadata stored as bytes on-chain for privacy-preserving execution
+ * Smart contracts execute on Arcology with PUBLIC logic, intent data stored as bytes
  * 
- * @param {Object} encryptedTx - Encrypted transaction metadata
+ * @param {Object} intentTx - Transaction intent metadata
  * @param {number} asyncNonce - Async nonce for parallel execution
  * @returns {Promise<Object>} Transaction result
  */
-export async function submitEncryptedTransaction(encryptedTx, asyncNonce) {
-  // TODO: Implement encrypted transaction submission to Arcology
+export async function submitEncryptedTransaction(intentTx, asyncNonce) {
+  // TODO: Implement private transaction submission to Arcology
   // Flow:
-  // 1. Encrypted metadata prepared off-chain (Lit Protocol)
+  // 1. Intent metadata prepared off-chain (ABI-encoded)
   // 2. Submit to Arcology contract with async nonce
   // 3. Arcology executes in parallel (10k-15k TPS)
   // 4. Return transaction hash and async nonce
   
   const provider = getArcologyProvider()
   
-  console.log('Submitting encrypted transaction to Arcology parallel blockchain...')
+  console.log('Submitting private transaction to Arcology parallel blockchain...')
   console.log('Async Nonce:', asyncNonce)
   console.log('Expected execution: Parallel (10k-15k TPS)')
   

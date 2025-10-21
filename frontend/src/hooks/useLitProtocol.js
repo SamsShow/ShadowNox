@@ -1,17 +1,9 @@
 /**
- * Lit Protocol Hook
- * Manages Lit Protocol encryption/decryption for Shadow Economy
+ * Privacy Hook (MVP - UI Only)
  * 
- * ⚠️ IMPORTANT: Encrypts transaction METADATA only, NOT contract bytecode
- * 
- * What gets encrypted:
- * - User balances and portfolio positions
- * - Trade amounts and parameters
- * - Historical transaction metadata
- * 
- * What remains public on Arcology:
- * - Smart contract logic (Solidity code)
- * - Aggregate market metrics
+ * Note: This is a placeholder hook for the MVP.
+ * Actual encryption/decryption will be implemented in a future version.
+ * The UI maintains privacy indicators for design consistency.
  */
 
 import { useState, useEffect } from 'react'
@@ -21,46 +13,24 @@ export function useLitProtocol() {
   const [litClient, setLitClient] = useState(null)
 
   useEffect(() => {
-    // TODO: Initialize Lit Protocol client
-    // - Connect to Lit Network (DatilDev for testing)
-    // - Set up metadata encryption (balances, amounts)
-    // - Configure IPFS/Arweave storage for encrypted data
-    
-    const initLit = async () => {
-      try {
-        // Placeholder for Lit client initialization
-        console.log('Initializing Lit Protocol...')
-        
-        // Simulate initialization
-        setTimeout(() => {
-          setIsInitialized(true)
-          console.log('✅ Lit Protocol initialized')
-        }, 1000)
-        
-      } catch (error) {
-        console.error('Failed to initialize Lit Protocol:', error)
-      }
-    }
-
-    initLit()
+    // MVP: Immediately mark as initialized for UI purposes
+    setIsInitialized(true)
   }, [])
 
   /**
-   * Encrypt data with Lit Protocol
+   * Placeholder encrypt function (MVP - returns data as-is)
    */
   const encrypt = async (data) => {
-    // Implementation pending
-    console.log('Encrypting data with Lit Protocol...')
-    return { encryptedData: null, accessControlConditions: [] }
+    console.warn('⚠️ MVP Mode: Encryption not implemented. Data passed through as-is.')
+    return { encryptedData: data, accessControlConditions: [] }
   }
 
   /**
-   * Decrypt data with Lit Protocol
+   * Placeholder decrypt function (MVP - returns data as-is)
    */
   const decrypt = async (encryptedData) => {
-    // Implementation pending
-    console.log('Decrypting data with Lit Protocol...')
-    return { decryptedData: null }
+    console.warn('⚠️ MVP Mode: Decryption not implemented. Data passed through as-is.')
+    return { decryptedData: encryptedData }
   }
 
   return {

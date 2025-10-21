@@ -7,29 +7,28 @@
 
 ## Overview
 
-Shadow Economy is a fully privacy-enabled, high-performance DeFi layer leveraging **Arcology's parallel execution blockchain**. It introduces client-side encrypted transaction metadata, async nonces for parallel execution, and EVVM Fisher bot-based interaction models to enable private financial activity while maintaining aggregate verifiability through Pyth oracle integration.
+Shadow Economy is a privacy-preserving, high-performance DeFi layer leveraging **Arcology's parallel execution blockchain**. It features async nonces for parallel execution and EVVM Fisher bot-based interaction models to enable private financial activity while maintaining aggregate verifiability through Pyth oracle integration.
 
-This creates a "dark-pool-like DeFi" environment—where users can trade, lend, stake, and manage strategies without public visibility into wallets, trades, or portfolio states, while achieving **10,000-15,000 TPS** through Arcology's parallel processing.
+This creates a "dark-pool-like DeFi" environment designed for private trading, lending, and strategy management while achieving **10,000-15,000 TPS** through Arcology's parallel processing.
 
 ## Architecture
 
 ```
 User (WhatsApp/Telegram)
     ↓
-EVVM Fisher Bot (EIP-191 signature) → Lit Protocol (Encrypt Metadata)
+EVVM Fisher Bot (EIP-191 signature) → Intent Processing
     ↓
 Arcology Parallel Blockchain (10k-15k TPS)
     ↓
 Pyth Oracle (Pull via Hermes) → Aggregate Data Only
     ↓
-EVVM Fisher Bot (Decrypt Result) → User
+EVVM Fisher Bot (Process Result) → User
 ```
 
 ## Technology Stack
 
 - **Arcology**: Parallel blockchain execution layer with 10k-15k TPS and EVM equivalence
 - **EVVM**: Fisher/Relayer bot network with EIP-191 signatures for gasless UX
-- **Lit Protocol**: Distributed encryption for transaction **metadata only** (not contract bytecode)
 - **Pyth Network**: Privacy-preserving aggregate oracle data via Hermes Pull method
 - **Node.js**: Bot infrastructure for WhatsApp, Telegram, and Fisher network
 - **Hardhat**: Smart contract development and Arcology deployment
@@ -90,10 +89,10 @@ npm run dev
 ## Key Features
 
 - **Parallel Execution**: 10,000-15,000 TPS on Arcology blockchain
-- **Metadata Encryption**: Client-side encryption via Lit Protocol (balances, amounts, positions)
+- **Privacy-Preserving Architecture**: Intent-based execution designed for private transactions
 - **Async Nonce System**: Quantum-like state management for parallel transactions
 - **Fisher Bot Interface**: Interact via WhatsApp/Telegram with EIP-191 signatures
-- **Aggregate Privacy**: Zero-knowledge market summaries protect individual positions
+- **Aggregate Privacy**: Market summaries protect individual positions
 - **Pull Oracle**: Pyth Hermes API for real-time price feeds
 
 ## Architecture Highlights
@@ -104,11 +103,11 @@ npm run dev
 - **Optimistic Concurrency**: Parallel smart contract execution with conflict resolution
 - **EVM Equivalence**: Full compatibility with existing Solidity code
 
-### Lit Protocol Privacy
-- **Metadata-Only Encryption**: Encrypts user data (balances, amounts), NOT contract logic
-- **Off-Chain Storage**: Encrypted data stored on IPFS/Arweave
-- **Threshold Decryption**: 2/3 consensus required for data access
-- **Access Control**: User-controlled decryption permissions
+### Privacy Model (MVP)
+- **Intent Data**: Transaction parameters stored as bytes on-chain
+- **Aggregate Metrics**: Market-wide data publicly visible, individual positions private
+- **Future Enhancement**: Full encryption layer planned for production
+- **Access Control**: User-controlled transaction submission
 
 ### EVVM Fisher Bots
 - **EIP-191 Signatures**: Secure transaction relay to Arcology
@@ -174,13 +173,13 @@ All commits must:
 ## Use Cases
 
 ### Private Trading
-Swap tokens without revealing positions using Arcology's parallel execution and Lit Protocol metadata encryption.
+Swap tokens using Arcology's parallel execution with privacy-preserving intent architecture.
 
-### Encrypted Lending
-Lend/borrow assets privately with hidden collateral positions and confidential interest rates.
+### Private Lending
+Lend/borrow assets with privacy-focused position management and confidential operations.
 
 ### Dark Pool Liquidity
-Institutional-grade privacy for large order execution without slippage, powered by 10k-15k TPS.
+Institutional-grade infrastructure for large order execution without slippage, powered by 10k-15k TPS.
 
 ## License
 
