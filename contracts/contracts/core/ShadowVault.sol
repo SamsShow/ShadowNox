@@ -3,32 +3,32 @@ pragma solidity ^0.8.20;
 
 /**
  * @title ShadowVault
- * @notice Encrypted position storage for Shadow Economy on Arcology
- * @dev Position metadata stored as encrypted references to off-chain data
+ * @notice Private position storage for Shadow Economy on Arcology
+ * @dev Position metadata stored as bytes on-chain for privacy-preserving execution
  * 
  * Deployed on Arcology Parallel Blockchain:
- * - Stores encrypted position metadata references
- * - Actual encrypted data stored on IPFS/Arweave
- * - Lit Protocol handles decryption access control
+ * - Stores position metadata as arbitrary bytes
+ * - Position data stored on-chain
+ * - Privacy via intent relay architecture (future)
  * - Parallel execution for position CRUD operations
  * 
  * Privacy Model:
- * - Position data (balances, assets, values): ENCRYPTED (Lit Protocol → IPFS/Arweave)
+ * - Position data (balances, assets, values): Stored as bytes on-chain
  * - Position count: PUBLIC (on-chain reference)
  * - Smart contract logic: PUBLIC (Solidity on Arcology)
  * 
- * Decryption: Off-chain via Lit Protocol with user access control conditions
+ * Data Format: ABI-encoded position info (asset, amount, entryPrice, timestamp)
  */
 contract ShadowVault {
-    // Encrypted position data structure
-    struct EncryptedPosition {
-        bytes encryptedData; // Lit Protocol encrypted position details
+    // Private position data structure
+    struct Position {
+        bytes positionData;  // ABI-encoded position details (asset, amount, entryPrice, timestamp)
         uint256 timestamp;   // Position creation/update time
         bool active;         // Position status
     }
 
-    // User address => Position ID => Encrypted Position
-    mapping(address => mapping(uint256 => EncryptedPosition)) private positions;
+    // User address => Position ID => Position
+    mapping(address => mapping(uint256 => Position)) private positions;
     
     // User address => Position count
     mapping(address => uint256) private positionCounts;
@@ -43,15 +43,15 @@ contract ShadowVault {
     error PositionNotActive();
 
     /**
-     * @notice Create a new encrypted position for the message sender.
-     * @param _encryptedData Lit Protocol encrypted position data.
+     * @notice Create a new private position for the message sender.
+     * @param _positionData ABI-encoded position data (asset, amount, entryPrice, timestamp).
      * @return The ID of the newly created position.
      */
-    function createPosition(bytes calldata _encryptedData) external returns (uint256) {
+    function createPosition(bytes calldata _positionData) external returns (uint256) {
         uint256 newPositionId = positionCounts[msg.sender]++;
         
-        positions[msg.sender][newPositionId] = EncryptedPosition({
-            encryptedData: _encryptedData,
+        positions[msg.sender][newPositionId] = Position({
+            positionData: _positionData,
             timestamp: block.timestamp,
             active: true
         });
@@ -61,12 +61,12 @@ contract ShadowVault {
     }
 
     /**
-     * @notice Update an existing encrypted position.
+     * @notice Update an existing private position.
      * @param _positionId Position ID to update.
-     * @param _encryptedData New encrypted data.
+     * @param _positionData New position data.
      */
-    function updatePosition(uint256 _positionId, bytes calldata _encryptedData) external {
-        EncryptedPosition storage position = positions[msg.sender][_positionId];
+    function updatePosition(uint256 _positionId, bytes calldata _positionData) external {
+        Position storage position = positions[msg.sender][_positionId];
 
         if (position.timestamp == 0) { 
             revert PositionNotFound();
@@ -75,7 +75,7 @@ contract ShadowVault {
             revert PositionNotActive();
         }
 
-        position.encryptedData = _encryptedData;
+        position.positionData = _positionData;
         position.timestamp = block.timestamp;
 
         emit PositionUpdated(msg.sender, _positionId, block.timestamp);
@@ -86,7 +86,7 @@ contract ShadowVault {
      * @param _positionId Position ID to close.
      */
     function closePosition(uint256 _positionId) external {
-        EncryptedPosition storage position = positions[msg.sender][_positionId];
+        Position storage position = positions[msg.sender][_positionId];
 
         if (position.timestamp == 0) {
             revert PositionNotFound();
@@ -101,17 +101,17 @@ contract ShadowVault {
     }
 
     /**
-     * @notice Get encrypted position data for a specific user and position ID.
+     * @notice Get position data for a specific user and position ID.
      * @param _user User address.
      * @param _positionId Position ID.
-     * @return The encrypted position data.
+     * @return The position data.
      */
     function getPosition(address _user, uint256 _positionId) 
         external 
         view 
-        returns (EncryptedPosition memory) 
+        returns (Position memory) 
     {
-        EncryptedPosition storage position = positions[_user][_positionId];
+        Position storage position = positions[_user][_positionId];
         if (position.timestamp == 0) {
             revert PositionNotFound();
         }

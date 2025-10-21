@@ -7,17 +7,17 @@ import "../arcology/AtomicCounter.sol";
 /**
  * @title EncryptedSwap
  * @notice Private swap execution for Shadow Economy on Arcology
- * @dev Swap intents use client-side metadata encryption (Lit Protocol) for privacy
+ * @dev Swap intents store arbitrary intent data for privacy-preserving execution
  * 
  * Executes on Arcology Parallel Blockchain:
  * - 10,000-15,000 TPS throughput for parallel swap execution
- * - Transaction metadata encrypted via Lit Protocol (off-chain)
- * - Smart contract logic PUBLIC, user parameters PRIVATE
+ * - Transaction metadata stored as bytes on-chain
+ * - Smart contract logic PUBLIC, user parameters stored as bytes
  * - Async nonce support for parallel intent submission
  * - Optimistic concurrency control for conflict-free execution
  * 
  * Privacy Model:
- * - Individual swap details: ENCRYPTED (Lit Protocol → IPFS/Arweave)
+ * - Individual swap details: Stored as bytes (intent data)
  * - Aggregate volume metrics: PUBLIC (on-chain)
  * - Smart contract bytecode: PUBLIC (Solidity logic on Arcology)
  * 
@@ -34,9 +34,9 @@ contract EncryptedSwap {
     // BOT INTEGRATION: FisherRewards contract for bot incentives
     address public fisherRewards;
 
-    // Encrypted swap intent structure
+    // Private swap intent structure
     struct SwapIntent {
-        bytes encryptedIntent; // Lit Protocol encrypted swap details
+        bytes intentData;      // ABI-encoded swap parameters (tokenIn, tokenOut, amountIn, minAmountOut, deadline)
         uint256 timestamp;
         uint256 asyncNonce;    // Async nonce for parallel execution
         bool executed;
@@ -91,17 +91,17 @@ contract EncryptedSwap {
     }
 
     /**
-     * @notice Submit an encrypted swap intent.
+     * @notice Submit a private swap intent.
      * @dev BOT INTEGRATION: Fisher bots relay user's signed intent to this function
-     * @param _encryptedIntent Lit Protocol encrypted swap details.
+     * @param _intentData ABI-encoded swap parameters (tokenIn, tokenOut, amountIn, minAmountOut, deadline).
      * @param _asyncNonce Async nonce for parallel execution.
      * @return intentId The unique ID for the swap intent.
      */
-    function submitSwapIntent(bytes calldata _encryptedIntent, uint256 _asyncNonce) 
+    function submitSwapIntent(bytes calldata _intentData, uint256 _asyncNonce) 
         external 
         returns (bytes32) 
     {
-        bytes32 intentId = keccak256(abi.encodePacked(msg.sender, _asyncNonce, _encryptedIntent));
+        bytes32 intentId = keccak256(abi.encodePacked(msg.sender, _asyncNonce, _intentData));
         
         require(swapIntents[intentId].timestamp == 0, "Intent already exists");
 
@@ -109,7 +109,7 @@ contract EncryptedSwap {
         asyncNonceEngine.createAsyncBranch(msg.sender, _asyncNonce, intentId);
 
         swapIntents[intentId] = SwapIntent({
-            encryptedIntent: _encryptedIntent,
+            intentData: _intentData,
             timestamp: block.timestamp,
             asyncNonce: _asyncNonce,
             executed: false,
@@ -124,9 +124,9 @@ contract EncryptedSwap {
 
     /**
      * @notice Execute a swap intent after it has been settled.
-     * @dev BOT INTEGRATION: Called by Fisher bot relayer after Lit Protocol decryption
+     * @dev BOT INTEGRATION: Called by Fisher bot relayer after processing intent data
      * @param _intentId Intent ID to execute.
-     * @param _volume The volume of the swap, provided by the relayer after decryption.
+     * @param _volume The volume of the swap, provided by the relayer after processing.
      */
     function executeSwap(bytes32 _intentId, uint256 _volume) external onlyOwner {
         SwapIntent storage intent = swapIntents[_intentId];
@@ -222,7 +222,7 @@ contract EncryptedSwap {
 
     /**
      * @notice Get aggregate swap metrics.
-     * @dev Public metrics safe for display (individual swap details remain encrypted)
+     * @dev Public metrics safe for display (individual swap details remain private)
      * @return volume Total swap volume.
      * @return count Total swap count.
      */
@@ -231,7 +231,7 @@ contract EncryptedSwap {
     }
 
     /**
-     * @notice Retrieve an encrypted swap intent by its ID.
+     * @notice Retrieve a swap intent by its ID.
      */
     function getSwapIntent(bytes32 _intentId) external view returns (SwapIntent memory) {
         return swapIntents[_intentId];
