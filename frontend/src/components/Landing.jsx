@@ -44,20 +44,7 @@ function Landing() {
         <div className="max-w-6xl mx-auto px-6 py-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <svg width="32" height="32" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M20 0L37.3205 10V30L20 40L2.67949 30V10L20 0Z" fill="url(#gradient1)"/>
-                <path d="M12 12H16C17.1046 12 18 12.8954 18 14V18C18 19.1046 17.1046 20 16 20H12C10.8954 20 10 19.1046 10 18V14C10 12.8954 10.8954 12 12 12Z" fill="#FF6B4A"/>
-                <path d="M20 16H28C29.1046 16 30 16.8954 30 18V22C30 23.1046 29.1046 24 28 24H20C18.8954 24 18 23.1046 18 22V18C18 16.8954 18.8954 16 20 16Z" fill="#E74C3C"/>
-                <path d="M12 24H16C17.1046 24 18 24.8954 18 26V28C18 29.1046 17.1046 30 16 30H12C10.8954 30 10 29.1046 10 28V26C10 24.8954 10.8954 24 12 24Z" fill="white" fillOpacity="0.9"/>
-                <path d="M22 10H26C27.1046 10 28 10.8954 28 12V14C28 15.1046 27.1046 16 26 16H22C20.8954 16 20 15.1046 20 14V12C20 10.8954 20.8954 10 22 10Z" fill="white" fillOpacity="0.9"/>
-                <path d="M24 24H28C29.1046 24 30 24.8954 30 26V28C30 29.1046 29.1046 30 28 30H24C22.8954 30 22 29.1046 22 28V26C22 24.8954 22.8954 24 24 24Z" fill="white" fillOpacity="0.9"/>
-                <defs>
-                  <linearGradient id="gradient1" x1="2.67949" y1="0" x2="37.3205" y2="40" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#6366F1"/>
-                    <stop offset="1" stopColor="#8B5CF6"/>
-                  </linearGradient>
-                </defs>
-              </svg>
+              <img src="/logo.png" alt="Shadow Nox Logo" className="w-9 h-10" />
               <span className="text-lg font-semibold tracking-tight">Shadow Nox</span>
             </div>
             <div className="hidden md:flex items-center space-x-8 text-sm">

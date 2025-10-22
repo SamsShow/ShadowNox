@@ -1,14 +1,27 @@
-<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M20 0L37.3205 10V30L20 40L2.67949 30V10L20 0Z" fill="url(#gradient1)"/>
-  <path d="M12 12H16C17.1046 12 18 12.8954 18 14V18C18 19.1046 17.1046 20 16 20H12C10.8954 20 10 19.1046 10 18V14C10 12.8954 10.8954 12 12 12Z" fill="#FF6B4A"/>
-  <path d="M20 16H28C29.1046 16 30 16.8954 30 18V22C30 23.1046 29.1046 24 28 24H20C18.8954 24 18 23.1046 18 22V18C18 16.8954 18.8954 16 20 16Z" fill="#E74C3C"/>
-  <path d="M12 24H16C17.1046 24 18 24.8954 18 26V28C18 29.1046 17.1046 30 16 30H12C10.8954 30 10 29.1046 10 28V26C10 24.8954 10.8954 24 12 24Z" fill="white" fill-opacity="0.9"/>
-  <path d="M22 10H26C27.1046 10 28 10.8954 28 12V14C28 15.1046 27.1046 16 26 16H22C20.8954 16 20 15.1046 20 14V12C20 10.8954 20.8954 10 22 10Z" fill="white" fill-opacity="0.9"/>
-  <path d="M24 24H28C29.1046 24 30 24.8954 30 26V28C30 29.1046 29.1046 30 28 30H24C22.8954 30 22 29.1046 22 28V26C22 24.8954 22.8954 24 24 24Z" fill="white" fill-opacity="0.9"/>
+<svg width="40" height="40" viewBox="0 0 230 230" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Hexagon background -->
+  <path d="M115 5L218.3 62.5V177.5L115 235L11.7 177.5V62.5L115 5Z" fill="url(#hexGradient)"/>
+  
+  <!-- White elements (top) -->
+  <path d="M60 35C60 30 64 26 69 26H96C101 26 105 30 105 35V62C105 67 101 71 96 71H69C64 71 60 67 60 62V35Z" fill="white" fill-opacity="0.95"/>
+  <path d="M125 35C125 30 129 26 134 26H161C166 26 170 30 170 35V62C170 67 166 71 161 71H134C129 71 125 67 125 62V35Z" fill="white" fill-opacity="0.95"/>
+  
+  <!-- Orange/Red elements (left and center) -->
+  <path d="M28 80C28 75 32 71 37 71H54C59 71 63 75 63 80V135C63 140 59 144 54 144H37C32 144 28 140 28 135V80Z" fill="#FF6B4A"/>
+  <path d="M90 95C90 90 94 86 99 86H146C151 86 155 90 155 95V125C155 130 151 134 146 134H99C94 134 90 130 90 125V95Z" fill="url(#centerGradient)"/>
+  
+  <!-- White elements (bottom) -->
+  <path d="M60 159C60 154 64 150 69 150H96C101 150 105 154 105 159V186C105 191 101 195 96 195H69C64 195 60 191 60 186V159Z" fill="white" fill-opacity="0.95"/>
+  <path d="M125 159C125 154 129 150 134 150H161C166 150 170 154 170 159V186C170 191 166 195 161 195H134C129 195 125 191 125 186V159Z" fill="white" fill-opacity="0.95"/>
+  
   <defs>
-    <linearGradient id="gradient1" x1="2.67949" y1="0" x2="37.3205" y2="40" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#6366F1"/>
-      <stop offset="1" stop-color="#8B5CF6"/>
+    <linearGradient id="hexGradient" x1="11.7" y1="5" x2="218.3" y2="235" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5B4FE8"/>
+      <stop offset="1" stop-color="#7C3AED"/>
+    </linearGradient>
+    <linearGradient id="centerGradient" x1="90" y1="86" x2="155" y2="134" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF6B4A"/>
+      <stop offset="1" stop-color="#E74C3C"/>
     </linearGradient>
   </defs>
 </svg>
