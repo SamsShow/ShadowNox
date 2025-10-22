@@ -24,8 +24,8 @@ export function getQuickSwapKeyboard() {
       { text: '100 USDC → ETH', callback_data: 'quick_swap_usdc_eth' },
     ],
     [
-      { text: '0.5 ETH → USDT', callback_data: 'quick_swap_eth_usdt' },
-      { text: '500 USDT → ETH', callback_data: 'quick_swap_usdt_eth' },
+      { text: 'X ETH → USDT', callback_data: 'quick_swap_eth_usdt_custom' },
+      { text: 'X USDT → ETH', callback_data: 'quick_swap_usdt_eth_custom' },
     ],
     [
       { text: '⬅️ Back to Trade', callback_data: 'nav_back_prev' },
@@ -145,6 +145,46 @@ export async function handleTradeNavigation(ctx, data, pushView, popView, userSt
           inline_keyboard: [
             [ { text: '✅ Confirm Swap', callback_data: 'confirm_swap_execute' } ],
             [ { text: '❌ Cancel', callback_data: 'nav_back_prev' } ]
+          ]
+        };
+        pushView(text, markup);
+        await ctx.editMessageText(text, { parse_mode: 'Markdown', reply_markup: markup });
+      }
+      break;
+
+    case 'quick_swap_eth_usdt_custom':
+      await ctx.answerCbQuery();
+      {
+        userStates.set(userId, { 
+          action: 'custom_swap', 
+          step: 'amount',
+          swap: { from: 'ETH', to: 'USDT' }
+        });
+        
+        const text = '💰 Enter ETH Amount\n\nPlease reply with the amount of ETH you want to swap to USDT:\n\n*Example: 1.5*';
+        const markup = { 
+          inline_keyboard: [
+            [ { text: '⬅️ Back to Quick Swap', callback_data: 'nav_back_prev' } ]
+          ]
+        };
+        pushView(text, markup);
+        await ctx.editMessageText(text, { parse_mode: 'Markdown', reply_markup: markup });
+      }
+      break;
+
+    case 'quick_swap_usdt_eth_custom':
+      await ctx.answerCbQuery();
+      {
+        userStates.set(userId, { 
+          action: 'custom_swap', 
+          step: 'amount',
+          swap: { from: 'USDT', to: 'ETH' }
+        });
+        
+        const text = '💰 Enter USDT Amount\n\nPlease reply with the amount of USDT you want to swap to ETH:\n\n*Example: 500*';
+        const markup = { 
+          inline_keyboard: [
+            [ { text: '⬅️ Back to Quick Swap', callback_data: 'nav_back_prev' } ]
           ]
         };
         pushView(text, markup);
@@ -309,14 +349,32 @@ export async function handleTradeText(ctx, text, pushView, userStates) {
     userStates.set(userId, state);
     
     const swap = state.swap;
-    const text = `✅ Amount Set: ${amount}\n\n**Custom Swap Summary:**\nAmount: ${swap.amount}\nFrom: ${swap.from || 'Not selected'}\nTo: ${swap.to || 'Not selected'}\n\nComplete your swap configuration.`;
-    const markup = { 
-      inline_keyboard: [
-        [ { text: '⬅️ Back to Custom Swap', callback_data: 'nav_back_prev' } ]
-      ]
-    };
-    pushView(text, markup);
-    await ctx.editMessageText(text, { parse_mode: 'Markdown', reply_markup: markup });
+    
+    // Check if this is a quick custom swap (from/to already set)
+    if (swap.from && swap.to) {
+      // Calculate estimated output (mock calculation)
+      const estimatedOutput = swap.from === 'ETH' ? (amount * 2500).toFixed(2) : (amount / 2500).toFixed(4);
+      
+      const text = `✅ Swap Confirmation\n\n**Swap Details:**\nFrom: ${amount} ${swap.from}\nTo: ~${estimatedOutput} ${swap.to}\n\n**Rate:** 1 ${swap.from} = ${swap.from === 'ETH' ? '2500' : '0.0004'} ${swap.to}\n\n*Intent will be submitted to EVVM Fisher Bot*`;
+      const markup = { 
+        inline_keyboard: [
+          [ { text: '✅ Confirm Swap', callback_data: 'confirm_swap_execute' } ],
+          [ { text: '❌ Cancel', callback_data: 'nav_back_prev' } ]
+        ]
+      };
+      pushView(text, markup);
+      await ctx.reply(text, { parse_mode: 'Markdown', reply_markup: markup });
+    } else {
+      // Original custom swap flow
+      const text = `✅ Amount Set: ${amount}\n\n**Custom Swap Summary:**\nAmount: ${swap.amount}\nFrom: ${swap.from || 'Not selected'}\nTo: ${swap.to || 'Not selected'}\n\nComplete your swap configuration.`;
+      const markup = { 
+        inline_keyboard: [
+          [ { text: '⬅️ Back to Custom Swap', callback_data: 'nav_back_prev' } ]
+        ]
+      };
+      pushView(text, markup);
+      await ctx.reply(text, { parse_mode: 'Markdown', reply_markup: markup });
+    }
     
     return true;
   }

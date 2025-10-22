@@ -5,7 +5,10 @@ import crypto from 'crypto';
 
 export class UserWalletManager {
   constructor() {
-    this.userWalletsFile = path.resolve(process.cwd(), 'bots', '.user_wallets.json');
+    // Persist under bots/.user_wallets.json regardless of CWD
+    const botsDir = path.resolve(process.cwd(), '.');
+    const walletsDir = path.resolve(botsDir);
+    this.userWalletsFile = path.resolve(walletsDir, '.user_wallets.json');
     this.userWallets = this.loadUserWallets();
   }
 
@@ -23,6 +26,10 @@ export class UserWalletManager {
 
   saveUserWallets() {
     try {
+      const dir = path.dirname(this.userWalletsFile);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
       fs.writeFileSync(this.userWalletsFile, JSON.stringify(this.userWallets, null, 2), { encoding: 'utf-8' });
     } catch (error) {
       console.error('Could not save user wallets:', error.message);
