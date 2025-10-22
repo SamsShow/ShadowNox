@@ -7,6 +7,7 @@ import { config } from 'dotenv';
 import { encryptedSwapCommands } from './commands/encryptedSwap.js';
 import { lendingCommands } from './commands/lending.js';
 import { pythAdapterCommands } from './commands/pythAdapter.js';
+import { pythHermesCommands } from './commands/pythHermes.js';
 import { utilCommands } from './commands/utils.js';
 import { displayBanner } from './utils/display.js';
 
@@ -111,6 +112,32 @@ program
   .description('Get current price from Pyth for a token')
   .action(pythAdapterCommands.getPrice);
 
+// Pyth Hermes Real-time commands
+program
+  .command('pyth:realtime')
+  .description('Fetch real-time price from Pyth Hermes API')
+  .action(pythHermesCommands.fetchRealtimePrice);
+
+program
+  .command('pyth:update')
+  .description('Update on-chain price with real Pyth data')
+  .action(pythHermesCommands.updateOnchainPrice);
+
+program
+  .command('pyth:query')
+  .description('Query on-chain price')
+  .action(pythHermesCommands.queryOnchainPrice);
+
+program
+  .command('pyth:batch')
+  .description('Batch update multiple prices')
+  .action(pythHermesCommands.batchUpdatePrices);
+
+program
+  .command('pyth:list')
+  .description('List all available Pyth price feeds')
+  .action(pythHermesCommands.listPythFeeds);
+
 // Utility commands
 program
   .command('account:balance')
@@ -179,10 +206,11 @@ async function handleCategory(category) {
     ];
   } else if (category === 'oracle') {
     choices = [
-      { name: '🔧 Set Price ID', value: 'setPriceId' },
-      { name: '📈 Update Metrics', value: 'updateMetrics' },
-      { name: '📊 Get Metrics', value: 'getMetrics' },
-      { name: '💲 Get Price', value: 'getPrice' },
+      { name: '🌐 Fetch Real-time Price (Pyth Hermes)', value: 'realtimePrice' },
+      { name: '� Update On-Chain Price (Real Pyth)', value: 'updatePrice' },
+      { name: '� Query On-Chain Price', value: 'queryPrice' },
+      { name: '� Batch Update Prices', value: 'batchUpdate' },
+      { name: '📋 List Pyth Feeds', value: 'listFeeds' },
       { name: '⬅️  Back', value: 'back' }
     ];
   } else if (category === 'utils') {
@@ -233,10 +261,11 @@ async function executeAction(category, action) {
     }
   } else if (category === 'oracle') {
     switch (action) {
-      case 'setPriceId': await pythAdapterCommands.setPriceId(); break;
-      case 'updateMetrics': await pythAdapterCommands.updateMetrics(); break;
-      case 'getMetrics': await pythAdapterCommands.getMetrics(); break;
-      case 'getPrice': await pythAdapterCommands.getPrice(); break;
+      case 'realtimePrice': await pythHermesCommands.fetchRealtimePrice(); break;
+      case 'updatePrice': await pythHermesCommands.updateOnchainPrice(); break;
+      case 'queryPrice': await pythHermesCommands.queryOnchainPrice(); break;
+      case 'batchUpdate': await pythHermesCommands.batchUpdatePrices(); break;
+      case 'listFeeds': await pythHermesCommands.listPythFeeds(); break;
     }
   } else if (category === 'utils') {
     switch (action) {

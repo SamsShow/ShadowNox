@@ -11,9 +11,10 @@ config();
 
 // Contract addresses from deployments
 const CONTRACTS = {
-  EncryptedSwap: '0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9',
-  SimpleLending: '0x0000000000000000000000000000000000000000', // Update if deployed
-  PythAdapter: '0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9',
+  EncryptedSwap: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
+  SimpleLending: '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0',
+  CustomPriceOracle: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
+  PythAdapter: '0x5FbDB2315678afecb367f032d93F642f64180aa3', // Same as CustomPriceOracle
   MockPyth: '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0',
   ShadowVault: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
   FisherRewards: '0x5FC8d32690cc91D4c39d9d3abcBD16989F875707'
@@ -61,7 +62,8 @@ function getAbiPath(contractName) {
   const contractPaths = {
     EncryptedSwap: '../../../contracts/artifacts/contracts/core/EncryptedSwap.sol/EncryptedSwap.json',
     SimpleLending: '../../../contracts/artifacts/contracts/core/SimpleLending.sol/SimpleLending.json',
-    PythAdapter: '../../../contracts/artifacts/contracts/oracle/PythAdapter.sol/PythAdapter.json',
+    CustomPriceOracle: '../../../contracts/artifacts/contracts/oracle/CustomPriceOracle.sol/CustomPriceOracle.json',
+    PythAdapter: '../../../contracts/artifacts/contracts/oracle/CustomPriceOracle.sol/CustomPriceOracle.json',
     MockPyth: '../../../contracts/artifacts/contracts/mocks/MockPyth.sol/MockPyth.json',
     ShadowVault: '../../../contracts/artifacts/contracts/core/ShadowVault.sol/ShadowVault.json',
     FisherRewards: '../../../contracts/artifacts/contracts/core/FisherRewards.sol/FisherRewards.json'
