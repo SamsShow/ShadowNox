@@ -24,40 +24,42 @@ async function main() {
     console.log("   - Arcology optimizations will still work but won't achieve full parallel TPS\n");
   }
 
-  // Pyth contract address (use real Pyth contract for Arcology)
-  // TODO: Replace with actual Pyth contract address on Arcology testnet
-  const pythAddress = process.env.PYTH_CONTRACT_ADDRESS || "0x4305FB66699C3B2702D4d05CF36551390A4c69C6";
-  console.log(`\n🔮 Using Pyth Oracle at: ${pythAddress}`);
-  console.log("   Note: Ensure this is the correct Pyth contract for your network\n");
+  console.log("\n🔮 Oracle Solution: Custom Price Oracle");
+  console.log("   ⚠️  NOTE: Pyth Network is NOT deployed on Arcology");
+  console.log("   ✓ Using CustomPriceOracle instead");
+  console.log("   ✓ Fetches real prices from Pyth Hermes API (off-chain)");
+  console.log("   ✓ Stores prices on-chain via Fisher bot updates");
+  console.log("   ✓ No dependency on Pyth on-chain contracts\n");
 
-  // Deploy PythAdapter (Hermes Pull Oracle integration)
-  console.log("1/3 Deploying PythAdapter for real Pyth price feeds...");
-  const pythAdapter = await hre.ethers.deployContract("PythAdapter", [pythAddress]);
-  await pythAdapter.waitForDeployment();
-  const adapterAddress = await pythAdapter.getAddress();
-  console.log(`✅ PythAdapter deployed: ${adapterAddress}`);
-  console.log("   - Uses Pyth Hermes API for price feeds");
+  // Deploy CustomPriceOracle (Pyth Hermes API integration without on-chain dependency)
+  console.log("1/3 Deploying CustomPriceOracle for real price feeds...");
+  const priceOracle = await hre.ethers.deployContract("CustomPriceOracle");
+  await priceOracle.waitForDeployment();
+  const oracleAddress = await priceOracle.getAddress();
+  console.log(`✅ CustomPriceOracle deployed: ${oracleAddress}`);
+  console.log("   - Fetches from Pyth Hermes API (https://hermes.pyth.network)");
+  console.log("   - Fisher bots update prices on-chain");
   console.log("   - No mock data - production-ready oracle integration\n");
 
   // Deploy EncryptedSwap (parallel swap execution)
   console.log("2/3 Deploying EncryptedSwap for parallel private swaps...");
-  const encryptedSwap = await hre.ethers.deployContract("EncryptedSwap", [adapterAddress]);
+  const encryptedSwap = await hre.ethers.deployContract("EncryptedSwap", [oracleAddress]);
   await encryptedSwap.waitForDeployment();
   const swapAddress = await encryptedSwap.getAddress();
   console.log(`✅ EncryptedSwap deployed: ${swapAddress}`);
-  console.log("   - Integrated with PythAdapter for price validation");
+  console.log("   - Integrated with CustomPriceOracle for price validation");
   console.log("   - AtomicCounter for parallel metrics");
   console.log("   - Optimized for Arcology parallel execution\n");
 
   // Deploy SimpleLending (parallel lending protocol)
   console.log("3/3 Deploying SimpleLending for parallel lending operations...");
-  const simpleLending = await hre.ethers.deployContract("SimpleLending", [adapterAddress]);
+  const simpleLending = await hre.ethers.deployContract("SimpleLending", [oracleAddress]);
   await simpleLending.waitForDeployment();
   const lendingAddress = await simpleLending.getAddress();
   console.log(`✅ SimpleLending deployed: ${lendingAddress}`);
   console.log("   - Deposit/withdraw functionality");
   console.log("   - Borrow/repay with collateral checks");
-  console.log("   - Pyth oracle integration for collateral pricing");
+  console.log("   - CustomPriceOracle integration for collateral pricing");
   console.log("   - AtomicCounter for parallel metrics\n");
 
   // Get AtomicCounter addresses from EncryptedSwap
@@ -75,10 +77,9 @@ async function main() {
     chainId: hre.network.config.chainId,
     timestamp: new Date().toISOString(),
     contracts: {
-      PythAdapter: adapterAddress,
+      CustomPriceOracle: oracleAddress,
       EncryptedSwap: swapAddress,
-      SimpleLending: lendingAddress,
-      PythOracle: pythAddress
+      SimpleLending: lendingAddress
     },
     atomicCounters: {
       swapVolume: swapVolumeCounter,
@@ -87,17 +88,17 @@ async function main() {
       totalBorrows: borrowsCounter,
       totalCollateral: collateralCounter
     },
-    arcologyOptimizations: isArcology
+    arcologyOptimizations: isArcology,
+    oracleNotes: "Uses Pyth Hermes API off-chain (no Pyth on-chain contract required)"
   };
 
   console.log("═".repeat(80));
   console.log("🎉 DEPLOYMENT COMPLETE - SHADOW ECONOMY MVP ON ARCOLOGY");
   console.log("═".repeat(80));
   console.log("\n📝 Contract Addresses:\n");
-  console.log(`PYTH_ADAPTER_ADDRESS=${adapterAddress}`);
+  console.log(`CUSTOM_PRICE_ORACLE_ADDRESS=${oracleAddress}`);
   console.log(`ENCRYPTED_SWAP_ADDRESS=${swapAddress}`);
   console.log(`SIMPLE_LENDING_ADDRESS=${lendingAddress}`);
-  console.log(`PYTH_ORACLE_ADDRESS=${pythAddress}`);
   
   console.log("\n🔢 AtomicCounter Instances (Arcology Optimization):\n");
   console.log(`Swap Volume Counter: ${swapVolumeCounter}`);
@@ -114,11 +115,15 @@ async function main() {
 ARCOLOGY_RPC_URL=${hre.network.config.url}
 ARCOLOGY_CHAIN_ID=${hre.network.config.chainId}
 
+# Oracle Configuration
+# NOTE: Pyth Network is NOT deployed on Arcology
+# Using CustomPriceOracle with Pyth Hermes API (off-chain)
+PYTH_HERMES_URL=https://hermes.pyth.network
+
 # Contract Addresses
-PYTH_ADAPTER_ADDRESS=${adapterAddress}
+CUSTOM_PRICE_ORACLE_ADDRESS=${oracleAddress}
 ENCRYPTED_SWAP_ADDRESS=${swapAddress}
 SIMPLE_LENDING_ADDRESS=${lendingAddress}
-PYTH_ORACLE_ADDRESS=${pythAddress}
 
 # AtomicCounter Addresses
 SWAP_VOLUME_COUNTER=${swapVolumeCounter}
@@ -145,12 +150,13 @@ COLLATERAL_COUNTER=${collateralCounter}
 
   console.log("📚 Next Steps:\n");
   console.log("1. ✓ Core contracts deployed to Arcology");
-  console.log("2. ✓ Real Pyth oracle integration configured");
+  console.log("2. ✓ CustomPriceOracle deployed (Pyth Hermes API integration)");
   console.log("3. ✓ AtomicCounters deployed for parallel execution");
-  console.log("4. → Set Pyth price IDs: pythAdapter.setPriceId(token, priceId)");
-  console.log("5. → Test parallel swaps with multiple users");
-  console.log("6. → Test parallel lending operations");
-  console.log("7. → Wire Fisher bot integration (to be implemented)\n");
+  console.log("4. → Set price IDs: oracle.setPriceId(tokenAddress, pythPriceId)");
+  console.log("5. → Authorize Fisher bots: oracle.setAuthorizedUpdater(botAddress, true)");
+  console.log("6. → Start Fisher bot price updates from Hermes API");
+  console.log("7. → Test parallel swaps with multiple users");
+  console.log("8. → Test parallel lending operations\n");
 
   if (isArcology) {
     console.log("🚀 Arcology Parallel Execution Features:");
@@ -162,11 +168,13 @@ COLLATERAL_COUNTER=${collateralCounter}
     console.log("   ✓ Gas costs: ~100x lower than Ethereum L1\n");
   }
 
-  console.log("🔮 Pyth Oracle Integration:");
-  console.log("   - Real Pyth price feeds via Hermes API");
-  console.log("   - No mock data - production ready");
-  console.log("   - Price validation for swaps and lending");
-  console.log("   - Staleness checks (60 second threshold)\n");
+  console.log("🔮 Custom Oracle Integration (Pyth Hermes API):");
+  console.log("   - ⚠️  Pyth Network NOT available on Arcology");
+  console.log("   - ✓ Solution: CustomPriceOracle with off-chain Hermes API");
+  console.log("   - ✓ Fisher bots fetch from https://hermes.pyth.network");
+  console.log("   - ✓ Real price data, no mock feeds");
+  console.log("   - ✓ Price validation for swaps and lending");
+  console.log("   - ✓ Staleness checks (60 second threshold)\n");
 
   console.log("📊 Demonstrable Features:");
   console.log("   - Parallel swap execution across multiple users");
