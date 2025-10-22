@@ -16,7 +16,7 @@
     "lint:all": "npm run lint --workspaces --if-present && npm run lint",
     "lint:contracts": "cd contracts && solhint 'contracts/**/*.sol'",
     "clean": "npm run clean --workspaces && rm -rf node_modules",
-    "prepare": "husky install",
+    "prepare": "node -e \"if (process.env.NODE_ENV !== 'production' && !process.env.CI) { require('child_process').execSync('husky install', { stdio: 'inherit' }) }\"",
     "validate": "npm run lint:all && npm run test:all && npm run build"
   },
   "keywords": [
