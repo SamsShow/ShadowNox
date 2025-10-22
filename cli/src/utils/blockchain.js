@@ -9,13 +9,12 @@ const __dirname = dirname(__filename);
 
 config();
 
-// Contract addresses from deployments
+// Contract addresses from deployments (UPDATE AFTER DEPLOYMENT)
 const CONTRACTS = {
   EncryptedSwap: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
   SimpleLending: '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0',
   CustomPriceOracle: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
-  PythAdapter: '0x5FbDB2315678afecb367f032d93F642f64180aa3', // Same as CustomPriceOracle
-  MockPyth: '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0',
+  // Legacy PythAdapter removed - using CustomPriceOracle for all price feeds
   ShadowVault: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
   FisherRewards: '0x5FC8d32690cc91D4c39d9d3abcBD16989F875707'
 };
@@ -63,8 +62,6 @@ function getAbiPath(contractName) {
     EncryptedSwap: '../../../contracts/artifacts/contracts/core/EncryptedSwap.sol/EncryptedSwap.json',
     SimpleLending: '../../../contracts/artifacts/contracts/core/SimpleLending.sol/SimpleLending.json',
     CustomPriceOracle: '../../../contracts/artifacts/contracts/oracle/CustomPriceOracle.sol/CustomPriceOracle.json',
-    PythAdapter: '../../../contracts/artifacts/contracts/oracle/CustomPriceOracle.sol/CustomPriceOracle.json',
-    MockPyth: '../../../contracts/artifacts/contracts/mocks/MockPyth.sol/MockPyth.json',
     ShadowVault: '../../../contracts/artifacts/contracts/core/ShadowVault.sol/ShadowVault.json',
     FisherRewards: '../../../contracts/artifacts/contracts/core/FisherRewards.sol/FisherRewards.json'
   };
@@ -117,13 +114,15 @@ function getMinimalAbi(contractPath) {
       'event Borrowed(address indexed user, uint256 amount, uint256 collateral, uint256 timestamp)',
       'event Repaid(address indexed user, uint256 amount, uint256 timestamp)'
     ];
-  } else if (contractPath.includes('PythAdapter')) {
+  } else if (contractPath.includes('CustomPriceOracle')) {
     return [
       'function setPriceId(address token, bytes32 priceId) external',
-      'function updateAggregateMetrics(address token, int256 liquidityChange, uint256 volume, bytes[] calldata updateData) external payable',
-      'function getAggregateMetrics(address token) external view returns (tuple(uint256 totalLiquidity, uint256 totalVolume, uint256 lastUpdateTime, int64 lastPrice))',
-      'function getPrice(address token) external view returns (int64, uint256)',
-      'event MetricsUpdated(address indexed token, uint256 liquidity, uint256 volume, int64 price, uint256 timestamp)',
+      'function updatePrice(address token, int64 price, uint64 conf, int32 expo, uint publishTime) external',
+      'function updatePrices(address[] calldata tokens, int64[] calldata prices, uint64[] calldata confs, int32[] calldata expos, uint[] calldata publishTimes) external',
+      'function getLatestPrice(address token) external view returns (tuple(int64 price, uint64 conf, int32 expo, uint publishTime))',
+      'function getPriceUnsafe(address token) external view returns (tuple(int64 price, uint64 conf, int32 expo, uint publishTime))',
+      'function setAuthorizedUpdater(address updater, bool authorized) external',
+      'event PriceUpdated(address indexed token, int64 price, uint64 conf, uint publishTime)',
       'event PriceIdSet(address indexed token, bytes32 indexed priceId)'
     ];
   }
