@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "../arcology/AtomicCounter.sol";
-import "../oracle/PythAdapter.sol";
+import "../oracle/CustomPriceOracle.sol";
 
 /**
  * @title EncryptedSwap
@@ -27,7 +27,7 @@ import "../oracle/PythAdapter.sol";
  */
 contract EncryptedSwap {
     address public owner;
-    PythAdapter public pythAdapter;
+    CustomPriceOracle public priceOracle;
     
     // Private swap intent structure
     struct SwapIntent {
@@ -68,9 +68,9 @@ contract EncryptedSwap {
         _;
     }
 
-    constructor(address _pythAdapterAddress) {
+    constructor(address _priceOracleAddress) {
         owner = msg.sender;
-        pythAdapter = PythAdapter(_pythAdapterAddress);
+        priceOracle = CustomPriceOracle(_priceOracleAddress);
         
         // Deploy Arcology-optimized AtomicCounters
         totalSwapVolume = new AtomicCounter();
@@ -106,7 +106,7 @@ contract EncryptedSwap {
 
     /**
      * @notice Execute a swap intent after validation
-     * @dev Validates price using Pyth oracle and executes swap
+     * @dev Validates price using custom price oracle and executes swap
      * @param _intentId Intent ID to execute
      * @param _volume The volume of the swap (for metrics)
      * @param _tokenIn Address of input token
@@ -123,11 +123,11 @@ contract EncryptedSwap {
         if (intent.timestamp == 0) revert IntentNotFound();
         if (intent.executed || intent.cancelled) revert IntentAlreadyProcessed();
         
-        // Validate prices using Pyth oracle
-        PythStructs.Price memory priceIn = pythAdapter.getLatestPrice(_tokenIn);
-        PythStructs.Price memory priceOut = pythAdapter.getLatestPrice(_tokenOut);
+        // Validate prices using custom oracle (pulls from Pyth Hermes API)
+        CustomPriceOracle.Price memory priceIn = priceOracle.getLatestPrice(_tokenIn);
+        CustomPriceOracle.Price memory priceOut = priceOracle.getLatestPrice(_tokenOut);
         
-        // Basic staleness check (prices should be recent)
+        // Basic staleness check (prices should be recent) - oracle does this internally too
         require(priceIn.publishTime > block.timestamp - 60, "Price too stale");
         require(priceOut.publishTime > block.timestamp - 60, "Price too stale");
 
@@ -185,10 +185,10 @@ contract EncryptedSwap {
     }
     
     /**
-     * @notice Update PythAdapter address
-     * @param _pythAdapterAddress New PythAdapter address
+     * @notice Update price oracle address
+     * @param _priceOracleAddress New CustomPriceOracle address
      */
-    function updatePythAdapter(address _pythAdapterAddress) external onlyOwner {
-        pythAdapter = PythAdapter(_pythAdapterAddress);
+    function updatePriceOracle(address _priceOracleAddress) external onlyOwner {
+        priceOracle = CustomPriceOracle(_priceOracleAddress);
     }
 }

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "../arcology/AtomicCounter.sol";
-import "../oracle/PythAdapter.sol";
+import "../oracle/CustomPriceOracle.sol";
 
 /**
  * @title SimpleLending
@@ -12,7 +12,7 @@ import "../oracle/PythAdapter.sol";
  * Executes on Arcology Parallel Blockchain:
  * - 10,000-15,000 TPS throughput for parallel lending operations
  * - Multiple users can deposit/borrow simultaneously
- * - Collateral checks using real Pyth price feeds
+ * - Collateral checks using real price feeds from Pyth Hermes API
  * - Optimistic concurrency control for conflict-free execution
  * 
  * Arcology Optimizations:
@@ -22,7 +22,7 @@ import "../oracle/PythAdapter.sol";
  */
 contract SimpleLending {
     address public owner;
-    PythAdapter public pythAdapter;
+    CustomPriceOracle public priceOracle;
     
     // Collateralization ratio: 150% (need $150 collateral for $100 borrow)
     uint256 public constant COLLATERAL_RATIO = 150;
@@ -68,9 +68,9 @@ contract SimpleLending {
         _;
     }
 
-    constructor(address _pythAdapterAddress) {
+    constructor(address _priceOracleAddress) {
         owner = msg.sender;
-        pythAdapter = PythAdapter(_pythAdapterAddress);
+        priceOracle = CustomPriceOracle(_priceOracleAddress);
         
         // Deploy Arcology-optimized AtomicCounters
         totalDeposits = new AtomicCounter();
@@ -143,7 +143,7 @@ contract SimpleLending {
 
     /**
      * @notice Borrow funds against collateral
-     * @dev Uses Pyth oracle to validate collateral value
+     * @dev Uses custom oracle (Pyth Hermes API) to validate collateral value
      * @param _borrowAmount Amount to borrow
      */
     function borrow(uint256 _borrowAmount) external {
@@ -157,10 +157,10 @@ contract SimpleLending {
         uint256 availableLiquidity = totalDeposits.current() - totalBorrows.current();
         if (availableLiquidity < _borrowAmount) revert InsufficientLiquidity();
         
-        // Validate collateral value using Pyth oracle
-        PythStructs.Price memory collateralPrice = pythAdapter.getLatestPrice(account.collateralToken);
+        // Validate collateral value using custom oracle (pulls from Pyth Hermes API)
+        CustomPriceOracle.Price memory collateralPrice = priceOracle.getLatestPrice(account.collateralToken);
         
-        // Check price freshness (within last 60 seconds)
+        // Check price freshness (within last 60 seconds) - oracle also validates internally
         if (collateralPrice.publishTime < block.timestamp - 60) revert PriceStale();
         
         // Calculate collateral value (simple calculation for MVP)
@@ -266,11 +266,11 @@ contract SimpleLending {
     }
 
     /**
-     * @notice Update PythAdapter address
-     * @param _pythAdapterAddress New PythAdapter address
+     * @notice Update price oracle address
+     * @param _priceOracleAddress New CustomPriceOracle address
      */
-    function updatePythAdapter(address _pythAdapterAddress) external onlyOwner {
-        pythAdapter = PythAdapter(_pythAdapterAddress);
+    function updatePriceOracle(address _priceOracleAddress) external onlyOwner {
+        priceOracle = CustomPriceOracle(_priceOracleAddress);
     }
 }
 
