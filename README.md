@@ -7,7 +7,9 @@
 
 ## Overview
 
-Shadow Economy is a privacy-preserving, high-performance DeFi layer leveraging **Arcology's parallel execution blockchain**. It features async nonces for parallel execution and EVVM Fisher bot-based interaction models to enable private financial activity while maintaining aggregate verifiability through Pyth oracle integration.
+Shadow Economy is a privacy-preserving, high-performance DeFi layer leveraging **Arcology's parallel execution blockchain**. It features async nonces for parallel execution and EVVM Fisher bot-based interaction models to enable private financial activity while maintaining aggregate verifiability through custom oracle integration with Pyth's Hermes API.
+
+⚠️ **Note**: Pyth Network is NOT deployed on Arcology. We use a CustomPriceOracle that fetches real prices from Pyth's Hermes API off-chain.
 
 This creates a "dark-pool-like DeFi" environment designed for private trading, lending, and strategy management while achieving **10,000-15,000 TPS** through Arcology's parallel processing.
 
@@ -20,7 +22,7 @@ EVVM Fisher Bot (EIP-191 signature) → Intent Processing
     ↓
 Arcology Parallel Blockchain (10k-15k TPS)
     ↓
-Pyth Oracle (Pull via Hermes) → Aggregate Data Only
+CustomPriceOracle (fetches from Pyth Hermes API) → Aggregate Data Only
     ↓
 EVVM Fisher Bot (Process Result) → User
 ```
@@ -29,7 +31,8 @@ EVVM Fisher Bot (Process Result) → User
 
 - **Arcology**: Parallel blockchain execution layer with 10k-15k TPS and EVM equivalence
 - **EVVM**: Fisher/Relayer bot network with EIP-191 signatures for gasless UX
-- **Pyth Network**: Privacy-preserving aggregate oracle data via Hermes Pull method
+- **Pyth Hermes API**: Privacy-preserving aggregate oracle data via off-chain API (Pyth not on Arcology)
+- **CustomPriceOracle**: On-chain price storage contract compatible with Arcology
 - **Node.js**: Bot infrastructure for WhatsApp, Telegram, and Fisher network
 - **Hardhat**: Smart contract development and Arcology deployment
 - **React**: Frontend dashboard for portfolio management
@@ -93,7 +96,7 @@ npm run dev
 - **Async Nonce System**: Quantum-like state management for parallel transactions
 - **Fisher Bot Interface**: Interact via WhatsApp/Telegram with EIP-191 signatures
 - **Aggregate Privacy**: Market summaries protect individual positions
-- **Pull Oracle**: Pyth Hermes API for real-time price feeds
+- **Custom Oracle Solution**: Real Pyth prices via Hermes API without on-chain dependency
 
 ## Architecture Highlights
 

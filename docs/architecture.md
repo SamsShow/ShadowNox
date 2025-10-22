@@ -13,7 +13,7 @@ This creates a clean, focused demo of "parallel DeFi" designed for the Arcology 
 | Layer | Component | Description |
 |-------|-----------|-------------|
 | **Execution Layer** | Arcology Parallel Blockchain | EVM-equivalent parallel blockchain executing thousands of transactions simultaneously at 10k-15k TPS |
-| **Oracle Layer** | Pyth Network (Real Integration) | Provides real-time market data feeds, no mock data for production-ready demo |
+| **Oracle Layer** | Custom Oracle + Pyth Hermes API | ⚠️ Pyth Network NOT on Arcology - Using CustomPriceOracle with off-chain Hermes API |
 | **Privacy Layer** | Intent Storage as Bytes | Privacy-preserving intent storage on-chain as bytes (MVP approach) |
 | **Optimization Layer** | AtomicCounter | Conflict-resistant metrics for parallel execution demonstration |
 
@@ -69,16 +69,19 @@ Arcology processes transactions in full parallel using multiple EVM instances si
 | Public | Smart contract code | On-chain (Arcology) |
 | Public | Market-wide volume | Pyth Oracle feeds |
 
-### 3. Real Pyth Oracle Integration (Pull Method via Hermes)
+### 3. Custom Oracle Integration with Pyth Hermes API
 
-Shadow Economy uses Pyth Network's **Pull Oracle** with real price feeds - no mock data for production-ready demonstration.
+⚠️ **IMPORTANT**: Pyth Network is **NOT** deployed on Arcology blockchain.
+
+**Solution**: Shadow Economy uses a **CustomPriceOracle** contract that fetches real prices from Pyth's Hermes API off-chain.
 
 **Implementation:**
 
-1. **Fetch from Hermes**: Bots pull latest price feeds from Pyth's Hermes API
-2. **Update On-Chain**: Call `updatePriceFeeds()` on Arcology to update oracle data
-3. **Consume Prices**: Shadow Economy contracts read updated prices for execution
+1. **Fetch from Hermes**: Fisher bots pull latest price feeds from Pyth's Hermes API (https://hermes.pyth.network)
+2. **Update On-Chain**: Call `updatePrice()` on CustomPriceOracle contract deployed on Arcology
+3. **Consume Prices**: Shadow Economy contracts read updated prices from CustomPriceOracle
 4. **Price Validation**: Swap and lending operations validate prices before execution
+5. **No Dependency**: Works without Pyth's on-chain contract - fully compatible with Arcology
 
 | Visible On-Chain (Public) | Hidden From Public (Private) |
 |---------------------------|-------------------------------|
@@ -147,14 +150,16 @@ User
   - AtomicCounter for deposits/borrows/collateral metrics
   - Demonstrates parallel lending operations
 
-#### PythAdapter.sol (~146 lines)
-- **Purpose**: Real Pyth Network integration (no mocks)
+#### CustomPriceOracle.sol (~310 lines)
+- **Purpose**: Custom oracle using Pyth Hermes API (no Pyth on-chain contract required)
 - **Features**:
-  - Hermes API price feed integration
-  - On-chain price updates via `updatePriceFeeds()`
-  - Aggregate market metrics
-  - Real-time data updates for Arcology contracts
-  - Production-ready oracle integration
+  - Fetches real prices from Pyth Hermes API off-chain
+  - Stores prices on-chain via Fisher bot updates
+  - Multi-signature support for authorized updaters
+  - Price staleness validation (60-second default)
+  - Price deviation protection (anti-manipulation)
+  - Aggregate market metrics for privacy
+  - Works on Arcology without Pyth deployment
 
 #### AtomicCounter.sol (~132 lines)
 - **Purpose**: Conflict-resistant counters for Arcology
@@ -167,7 +172,8 @@ User
 ## Technology Stack
 
 - **Arcology**: Parallel blockchain with 10k-15k TPS - EVM-equivalent execution
-- **Pyth Network**: Real price feeds via Hermes Pull method (no mocks)
+- **Pyth Hermes API**: Real price feeds via off-chain API (Pyth not deployed on Arcology)
+- **CustomPriceOracle**: On-chain price storage compatible with Arcology
 - **Hardhat**: Smart contract development for Arcology deployment
 - **React + Vite**: Frontend dashboard
 - **Tailwind CSS**: Styling framework
@@ -221,22 +227,25 @@ User
 
 ### Contract Deployment Order
 
-1. **PythAdapter** (with real Pyth contract address)
-2. **EncryptedSwap** (uses PythAdapter)
-3. **SimpleLending** (uses PythAdapter)
+1. **CustomPriceOracle** (no external dependencies)
+2. **EncryptedSwap** (uses CustomPriceOracle)
+3. **SimpleLending** (uses CustomPriceOracle)
 
 Each contract deploys its own AtomicCounter instances automatically.
 
 ### Configuration
 
 ```javascript
-// Pyth contract address (Arcology testnet/mainnet)
-PYTH_CONTRACT_ADDRESS = "0x4305FB66699C3B2702D4d05CF36551390A4c69C6"
+// Oracle Configuration
+PYTH_HERMES_URL = "https://hermes.pyth.network"
 
 // Contract addresses (post-deployment)
-PYTH_ADAPTER_ADDRESS = "<deployed_address>"
+CUSTOM_PRICE_ORACLE_ADDRESS = "<deployed_address>"
 ENCRYPTED_SWAP_ADDRESS = "<deployed_address>"
 SIMPLE_LENDING_ADDRESS = "<deployed_address>"
+
+// NOTE: Pyth Network is NOT deployed on Arcology
+// We use CustomPriceOracle with off-chain Hermes API instead
 ```
 
 ## Testing Strategy
@@ -304,7 +313,9 @@ cd contracts && npm install
 
 # Configure Arcology RPC
 export ARCOLOGY_RPC_URL="<arcology_rpc>"
-export PYTH_CONTRACT_ADDRESS="<pyth_on_arcology>"
+export PYTH_HERMES_URL="https://hermes.pyth.network"
+
+# NOTE: No PYTH_CONTRACT_ADDRESS needed - Pyth not deployed on Arcology
 
 # Deploy contracts
 npx hardhat run scripts/deploy.js --network arcology
