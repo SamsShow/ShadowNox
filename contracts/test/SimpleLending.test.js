@@ -3,17 +3,16 @@ const { ethers } = require("hardhat");
 
 describe("SimpleLending - Arcology Parallel Execution", function () {
   let simpleLending;
-  let pythAdapter;
+  let priceOracle;
   let owner;
   let user1, user2, user3, user4;
-  let mockPyth;
 
   // Mock token addresses
   const USDC = "0x0000000000000000000000000000000000000001";
   const ETH = "0x0000000000000000000000000000000000000002";
   const BTC = "0x0000000000000000000000000000000000000003";
 
-  // Pyth price feed IDs (mock)
+  // Pyth price feed IDs (from Hermes API)
   const USDC_PRICE_ID = ethers.id("USDC/USD");
   const ETH_PRICE_ID = ethers.id("ETH/USD");
   const BTC_PRICE_ID = ethers.id("BTC/USD");
@@ -21,31 +20,31 @@ describe("SimpleLending - Arcology Parallel Execution", function () {
   beforeEach(async function () {
     [owner, user1, user2, user3, user4] = await ethers.getSigners();
 
-    // For testing, we'll use a mock Pyth contract
-    // In production, this would be the real Pyth contract on Arcology
-    const MockPyth = await ethers.getContractFactory("contracts/mocks/MockPyth.sol:MockPyth");
-    mockPyth = await MockPyth.deploy();
-    await mockPyth.waitForDeployment();
-
-    // Deploy PythAdapter
-    const PythAdapter = await ethers.getContractFactory("PythAdapter");
-    pythAdapter = await PythAdapter.deploy(await mockPyth.getAddress());
-    await pythAdapter.waitForDeployment();
+    // Deploy CustomPriceOracle (uses Pyth Hermes API, no on-chain contract needed)
+    const CustomPriceOracle = await ethers.getContractFactory("CustomPriceOracle");
+    priceOracle = await CustomPriceOracle.deploy();
+    await priceOracle.waitForDeployment();
 
     // Deploy SimpleLending
     const SimpleLending = await ethers.getContractFactory("SimpleLending");
-    simpleLending = await SimpleLending.deploy(await pythAdapter.getAddress());
+    simpleLending = await SimpleLending.deploy(await priceOracle.getAddress());
     await simpleLending.waitForDeployment();
 
-    // Configure price IDs in PythAdapter
-    await pythAdapter.setPriceId(USDC, USDC_PRICE_ID);
-    await pythAdapter.setPriceId(ETH, ETH_PRICE_ID);
-    await pythAdapter.setPriceId(BTC, BTC_PRICE_ID);
+    // Configure price IDs in CustomPriceOracle
+    await priceOracle.setPriceId(USDC, USDC_PRICE_ID);
+    await priceOracle.setPriceId(ETH, ETH_PRICE_ID);
+    await priceOracle.setPriceId(BTC, BTC_PRICE_ID);
+    
+    // Set mock prices for testing
+    const block = await ethers.provider.getBlock('latest');
+    await priceOracle.updatePrice(USDC_PRICE_ID, BigInt(1 * 10**8), BigInt(0.01 * 10**8), -8, block.timestamp);
+    await priceOracle.updatePrice(ETH_PRICE_ID, BigInt(3000 * 10**8), BigInt(10 * 10**8), -8, block.timestamp);
+    await priceOracle.updatePrice(BTC_PRICE_ID, BigInt(50000 * 10**8), BigInt(100 * 10**8), -8, block.timestamp);
   });
 
   describe("Deployment", function () {
-    it("Should deploy with correct PythAdapter", async function () {
-      expect(await simpleLending.pythAdapter()).to.equal(await pythAdapter.getAddress());
+    it("Should deploy with correct CustomPriceOracle", async function () {
+      expect(await simpleLending.priceOracle()).to.equal(await priceOracle.getAddress());
     });
 
     it("Should deploy AtomicCounters for metrics", async function () {

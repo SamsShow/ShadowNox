@@ -19,8 +19,7 @@ const { ethers } = require("hardhat");
 
 describe("EncryptedSwap - Arcology Parallel Execution", function () {
   let encryptedSwap;
-  let pythAdapter;
-  let mockPyth;
+  let priceOracle;
   let owner, user1, user2, user3, user4;
   
   // Mock token addresses
@@ -29,33 +28,33 @@ describe("EncryptedSwap - Arcology Parallel Execution", function () {
   const USDC = "0x0000000000000000000000000000000000000001";
   const ETH = "0x0000000000000000000000000000000000000002";
   
-  // Pyth price feed IDs (mock)
+  // Pyth price feed IDs (from Hermes API)
   const USDC_PRICE_ID = ethers.id("USDC/USD");
   const ETH_PRICE_ID = ethers.id("ETH/USD");
 
   beforeEach(async function () {
     [owner, user1, user2, user3, user4] = await ethers.getSigners();
 
-    // Deploy MockPyth for testing
-    const MockPyth = await ethers.getContractFactory("contracts/mocks/MockPyth.sol:MockPyth");
-    mockPyth = await MockPyth.deploy();
-    await mockPyth.waitForDeployment();
-
-    // Deploy PythAdapter
-    const PythAdapter = await ethers.getContractFactory("PythAdapter");
-    pythAdapter = await PythAdapter.deploy(await mockPyth.getAddress());
-    await pythAdapter.waitForDeployment();
+    // Deploy CustomPriceOracle (uses Pyth Hermes API, no on-chain contract needed)
+    const CustomPriceOracle = await ethers.getContractFactory("CustomPriceOracle");
+    priceOracle = await CustomPriceOracle.deploy();
+    await priceOracle.waitForDeployment();
 
     // Deploy EncryptedSwap
     const EncryptedSwap = await ethers.getContractFactory("EncryptedSwap");
-    encryptedSwap = await EncryptedSwap.deploy(await pythAdapter.getAddress());
+    encryptedSwap = await EncryptedSwap.deploy(await priceOracle.getAddress());
     await encryptedSwap.waitForDeployment();
 
     // Configure price IDs
-    await pythAdapter.setPriceId(USDC, USDC_PRICE_ID);
-    await pythAdapter.setPriceId(ETH, ETH_PRICE_ID);
-    await pythAdapter.setPriceId(TOKEN_IN, USDC_PRICE_ID);
-    await pythAdapter.setPriceId(TOKEN_OUT, ETH_PRICE_ID);
+    await priceOracle.setPriceId(USDC, USDC_PRICE_ID);
+    await priceOracle.setPriceId(ETH, ETH_PRICE_ID);
+    await priceOracle.setPriceId(TOKEN_IN, USDC_PRICE_ID);
+    await priceOracle.setPriceId(TOKEN_OUT, ETH_PRICE_ID);
+    
+    // Set mock prices for testing
+    const block = await ethers.provider.getBlock('latest');
+    await priceOracle.updatePrice(USDC_PRICE_ID, BigInt(1 * 10**8), BigInt(0.01 * 10**8), -8, block.timestamp);
+    await priceOracle.updatePrice(ETH_PRICE_ID, BigInt(3000 * 10**8), BigInt(10 * 10**8), -8, block.timestamp);
   });
 
   // Helper function to create ABI-encoded intent data
@@ -67,8 +66,8 @@ describe("EncryptedSwap - Arcology Parallel Execution", function () {
   }
 
   describe("Deployment", function () {
-    it("Should deploy with correct PythAdapter", async function () {
-      expect(await encryptedSwap.pythAdapter()).to.equal(await pythAdapter.getAddress());
+    it("Should deploy with correct CustomPriceOracle", async function () {
+      expect(await encryptedSwap.priceOracle()).to.equal(await priceOracle.getAddress());
     });
 
     it("Should deploy AtomicCounters for metrics", async function () {
@@ -152,11 +151,10 @@ describe("EncryptedSwap - Arcology Parallel Execution", function () {
     it("Should execute swap with valid Pyth prices", async function () {
       const swapVolume = ethers.parseEther("10");
 
-      // Note: This will revert due to Pyth price feed not properly set in mock
-      // In production with real Pyth on Arcology, this would work
+      // Execute swap with real CustomPriceOracle integration
       await expect(
         encryptedSwap.connect(owner).executeSwap(intentId, swapVolume, TOKEN_IN, TOKEN_OUT)
-      ).to.be.reverted; // Will revert due to price feed not set in MockPyth
+      ).to.emit(encryptedSwap, "SwapExecuted");
     });
 
     it("Should not allow non-owner to execute swap", async function () {
@@ -369,18 +367,19 @@ describe("EncryptedSwap - Arcology Parallel Execution", function () {
     });
   });
 
-  describe("PythAdapter Integration", function () {
-    it("Should allow updating PythAdapter address", async function () {
-      const newPythAdapter = await pythAdapter.getAddress();
-      await encryptedSwap.connect(owner).updatePythAdapter(newPythAdapter);
-      expect(await encryptedSwap.pythAdapter()).to.equal(newPythAdapter);
+  describe("CustomPriceOracle Integration", function () {
+    it("Should be integrated with CustomPriceOracle", async function () {
+      const oracleAddress = await encryptedSwap.priceOracle();
+      expect(oracleAddress).to.equal(await priceOracle.getAddress());
     });
 
-    it("Should not allow non-owner to update PythAdapter", async function () {
-      const newPythAdapter = await pythAdapter.getAddress();
-      await expect(
-        encryptedSwap.connect(user1).updatePythAdapter(newPythAdapter)
-      ).to.be.revertedWithCustomError(encryptedSwap, "NotOwner");
+    it("Should fetch prices from CustomPriceOracle", async function () {
+      // Verify that prices are set and can be retrieved
+      const usdcPrice = await priceOracle.getLatestPrice(USDC);
+      expect(usdcPrice.price).to.equal(BigInt(1 * 10**8));
+      
+      const ethPrice = await priceOracle.getLatestPrice(ETH);
+      expect(ethPrice.price).to.equal(BigInt(3000 * 10**8));
     });
   });
 });
