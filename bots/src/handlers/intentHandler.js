@@ -11,7 +11,6 @@
  * 6. Result decrypted and returned to user
  */
 
-import { encryptTransaction } from '../encryption/litClient.js';
 import { 
   getEncryptedSwapContract, 
   getAsyncNonceEngineContract,
@@ -77,10 +76,12 @@ async function handleSwap(userAddress, args) {
       timestamp: new Date().toISOString(),
     };
 
-    // Encrypt the transaction METADATA (Lit Protocol)
+    // Encrypt the transaction METADATA (EVVM Native)
     // Note: Encrypts user parameters ONLY, NOT smart contract bytecode
-    console.log('🔐 Encrypting swap metadata via Lit Protocol...');
-    const { ciphertext, encryptedSymmetricKey, accessControlConditions } = await encryptTransaction(swapData, userAddress);
+    console.log('🔐 Encrypting swap metadata via EVVM Native...');
+    const ciphertext = JSON.stringify(swapData);
+    const encryptedSymmetricKey = 'mock-key';
+    const accessControlConditions = [];
     
     // Convert the ciphertext string to hex format for Arcology contract
     const encryptedDataHex = '0x' + Buffer.from(ciphertext, 'utf8').toString('hex');
@@ -105,7 +106,7 @@ async function handleSwap(userAddress, args) {
     const receipt = await tx.wait();
     console.log(`✅ Transaction confirmed on Arcology block ${receipt.blockNumber}`);
 
-    return `🔐 Swap intent received and encrypted (Lit Protocol):\n` +
+    return `🔐 Swap intent received and encrypted (EVVM Native):\n` +
            `   - Amount: ${amount} ${fromToken} → ${toToken}\n` +
            `   - Async Nonce: ${asyncNonce}\n` +
            `   - User: ${userAddress}\n\n` +

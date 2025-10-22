@@ -1,7 +1,3 @@
-/**
- * Telegram Lend Handler
- * Handles lending functionality with conversational flow
- */
 
 /**
  * Generate lend menu keyboard

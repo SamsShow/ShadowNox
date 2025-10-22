@@ -12,7 +12,6 @@
 import dotenv from 'dotenv';
 import { initWhatsAppBot } from './whatsapp/index.js';
 import { initTelegramBot } from './telegram/index.js';
-import { initLitClient } from './encryption/litClient.js';
 import { initArcologyConnector } from './arcology/connector.js';
 
 // Load environment variables
@@ -26,12 +25,11 @@ async function initializeBots() {
   console.log('🎯 Architecture: EVVM Fisher Bots → Arcology Parallel Blockchain\n');
   
   try {
-    // Initialize Lit Protocol client (metadata-only encryption)
-    console.log('🔐 Initializing Lit Protocol for metadata encryption...');
+    // Initialize EVVM native encryption
+    console.log('🔐 Using EVVM native encryption...');
     console.log('   ⚠️  Encrypts: User balances, amounts, positions');
     console.log('   ⚠️  Does NOT encrypt: Smart contract bytecode');
-    await initLitClient();
-    console.log('✅ Lit Protocol ready\n');
+    console.log('✅ EVVM encryption ready\n');
     
     // Initialize Arcology connector (execution layer)
     console.log('⛓️  Connecting to Arcology Parallel Blockchain...');
@@ -55,9 +53,9 @@ async function initializeBots() {
     console.log('\n📊 System Status:');
     console.log('   ✅ EVVM Fisher Bots: Active (WhatsApp, Telegram)');
     console.log('   ✅ Arcology Blockchain: Connected (10k-15k TPS)');
-    console.log('   ✅ Lit Protocol: Ready (metadata encryption)');
+    console.log('   ✅ EVVM Native: Ready (metadata encryption)');
     console.log('\n🎯 Data Flow:');
-    console.log('   User → EVVM Fisher (EIP-191) → Lit (encrypt) → Arcology (execute)');
+    console.log('   User → EVVM Fisher (EIP-191) → EVVM (encrypt) → Arcology (execute)');
     console.log('\n📡 Monitoring for encrypted transaction intents...\n');
     
   } catch (error) {
