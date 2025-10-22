@@ -1,5 +1,6 @@
 
 import { getCurrentPrice } from '../../oracle/pythHermes.js';
+import { getMarketData } from '../evvmFisherFlow.js';
 
 /**
  * Generate markets keyboard
@@ -57,17 +58,23 @@ export async function handleMarketsNavigation(ctx, data, pushView, popView) {
     case 'markets_price_feeds':
       await ctx.answerCbQuery();
       {
-        // Import the EVVM Fisher flow processor
-        const { getTransactionStatus } = await import('../evvmFisherFlow.js');
+        // Get real-time market data from Pyth Network
+        const marketData = await getMarketData();
         
-        const eth = await getCurrentPrice('ETH/USD');
-        const btc = await getCurrentPrice('BTC/USD');
-        const usdc = await getCurrentPrice('USDC/USD');
-        
-        const text = `📈 Price Feeds (Pyth Hermes)\n\n**Current Prices:**\n• ETH/USD: $${eth.price} (exp ${eth.expo})\n• BTC/USD: $${btc.price} (exp ${btc.expo})\n• USDC/USD: $${usdc.price} (exp ${usdc.expo})\n\n**Flow Status:**\n✅ EVVM Fisher Bot: Active\n✅ EVVM Native: Connected\n✅ EVVM: Parallel execution\n✅ Pyth Hermes: Pull oracle\n\n*Following complete EVVM Fisher flow*`;
-        const markup = { inline_keyboard: [ [ { text: '⬅️ Back to Markets', callback_data: 'nav_back_prev' } ] ] };
-        pushView(text, markup);
-        await ctx.editMessageText(text, { parse_mode: 'Markdown', reply_markup: markup });
+        if (marketData.error) {
+          // Use fallback data
+          const fallback = marketData.fallback;
+          const text = `📈 Price Feeds (Fallback Data)\n\n**Current Prices:**\n${fallback.prices.map(p => `• ${p.symbol}: ${p.price} ${p.confidence}`).join('\n')}\n\n**Source:** ${fallback.source}\n**Status:** ${fallback.status}\n\n*Using fallback data - Pyth connection unavailable*`;
+          const markup = { inline_keyboard: [ [ { text: '⬅️ Back to Markets', callback_data: 'nav_back_prev' } ] ] };
+          pushView(text, markup);
+          await ctx.editMessageText(text, { parse_mode: 'Markdown', reply_markup: markup });
+        } else {
+          // Use real Pyth data
+          const text = `📈 Price Feeds (Pyth Network)\n\n**Current Prices:**\n${marketData.prices.map(p => `• ${p.symbol}: ${p.price} ${p.confidence} (${p.age}s ago)`).join('\n')}\n\n**Source:** ${marketData.source}\n**Status:** ${marketData.status}\n**Updated:** ${new Date(marketData.timestamp).toLocaleTimeString()}\n\n*Live data from Pyth Hermes API*`;
+          const markup = { inline_keyboard: [ [ { text: '⬅️ Back to Markets', callback_data: 'nav_back_prev' } ] ] };
+          pushView(text, markup);
+          await ctx.editMessageText(text, { parse_mode: 'Markdown', reply_markup: markup });
+        }
       }
       break;
 
@@ -84,10 +91,20 @@ export async function handleMarketsNavigation(ctx, data, pushView, popView) {
     case 'markets_refresh':
       await ctx.answerCbQuery('Refreshing market data...');
       {
-        const text = '🔄 Market Data Refreshed\n\n**Last Updated:**\n• Price feeds: Just now\n• Market stats: Just now\n• Network metrics: Just now\n\n*Data synchronized from Pyth Hermes*';
-        const markup = { inline_keyboard: [ [ { text: '⬅️ Back to Markets', callback_data: 'nav_back_prev' } ] ] };
-        pushView(text, markup);
-        await ctx.editMessageText(text, { parse_mode: 'Markdown', reply_markup: markup });
+        // Get fresh market data
+        const marketData = await getMarketData();
+        
+        if (marketData.error) {
+          const text = '🔄 Market Data Refresh\n\n**Status:** ❌ Connection Error\n**Error:** Pyth Hermes API unavailable\n**Fallback:** Using cached data\n\n*Retrying in background...*';
+          const markup = { inline_keyboard: [ [ { text: '⬅️ Back to Markets', callback_data: 'nav_back_prev' } ] ] };
+          pushView(text, markup);
+          await ctx.editMessageText(text, { parse_mode: 'Markdown', reply_markup: markup });
+        } else {
+          const text = `🔄 Market Data Refreshed\n\n**Last Updated:** ${new Date(marketData.timestamp).toLocaleString()}\n**Source:** ${marketData.source}\n**Status:** ${marketData.status}\n**Prices:** ${marketData.prices.length} feeds updated\n\n*Data synchronized from Pyth Hermes API*`;
+          const markup = { inline_keyboard: [ [ { text: '⬅️ Back to Markets', callback_data: 'nav_back_prev' } ] ] };
+          pushView(text, markup);
+          await ctx.editMessageText(text, { parse_mode: 'Markdown', reply_markup: markup });
+        }
       }
       break;
 
