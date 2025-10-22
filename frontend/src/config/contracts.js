@@ -110,5 +110,6 @@ export const CONTRACT_ABIS = {
     'event Withdrawn(address indexed user, uint256 amount, uint256 timestamp)',
     'event Borrowed(address indexed user, uint256 amount, uint256 collateral, uint256 timestamp)',
     'event Repaid(address indexed user, uint256 amount, uint256 timestamp)'
-  ],
+  ]
+};
 

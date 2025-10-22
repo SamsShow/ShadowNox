@@ -117,7 +117,7 @@ case $choice in
 # Arcology DevNet (Docker)
 ARCOLOGY_RPC_URL=http://localhost:8545
 ARCOLOGY_CHAIN_ID=1234
-PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+PRIVATE_KEY=YOUR_PRIVATE_KEY_HERE
 PYTH_HERMES_URL=https://hermes.pyth.network
 REPORT_GAS=true
 EOF
@@ -212,7 +212,7 @@ EOF
 # Hardhat Local Network (NOT Arcology - Sequential Execution Only)
 ARCOLOGY_RPC_URL=http://localhost:8545
 ARCOLOGY_CHAIN_ID=118
-PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+PRIVATE_KEY=YOUR_PRIVATE_KEY_HERE
 PYTH_HERMES_URL=https://hermes.pyth.network
 REPORT_GAS=true
 EOF
