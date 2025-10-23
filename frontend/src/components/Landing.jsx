@@ -53,7 +53,7 @@ function Landing() {
               <a href="#faq" className="text-zinc-400 hover:text-white transition-colors">FAQ</a>
             </div>
             <div>
-              <a href="https://t.me/shadownox42bot" target="_blank" rel="noopener noreferrer">
+              <a href="https://t.me/ShadowNox_BOT" target="_blank" rel="noopener noreferrer">
                 <button className="px-5 py-2 bg-white text-zinc-950 rounded-lg text-sm hover:bg-zinc-100 transition-all hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] font-medium">
                   Launch Bot
                 </button>
@@ -76,7 +76,7 @@ function Landing() {
               Trade, lend, and earn with complete privacy. 10k-15k TPS. Zero gas fees.
             </p>
             <div className="flex justify-center space-x-4 mb-12">
-              <a href="https://t.me/shadownox42bot" target="_blank" rel="noopener noreferrer">
+              <a href="https://t.me/ShadowNox_BOT" target="_blank" rel="noopener noreferrer">
                 <button className="px-7 py-3 bg-white text-zinc-950 rounded-lg hover:bg-zinc-100 transition-all hover:shadow-[0_0_30px_rgba(255,255,255,0.4)] font-medium">
                   Launch Bot
                 </button>
@@ -241,7 +241,7 @@ function Landing() {
           <p className="text-zinc-400 mb-8 text-lg">
             Experience private DeFi on Arcology
           </p>
-          <a href="https://t.me/shadownox42bot" target="_blank" rel="noopener noreferrer">
+          <a href="https://t.me/ShadowNox_BOT" target="_blank" rel="noopener noreferrer">
             <button className="px-8 py-3 bg-white text-zinc-950 rounded-lg font-medium hover:bg-zinc-100 transition-all hover:shadow-[0_0_30px_rgba(255,255,255,0.4)]">
               Launch Bot
             </button>
