@@ -7,7 +7,9 @@
 # Target: 10,000-15,000 TPS
 # 
 # Usage:
-#   ./benchmark-parallel.sh --transactions 10000 --parallel true
+#   ./benchmark-parallel.sh --transactions 10000 --users 100
+#   ./benchmark-parallel.sh --preset high-throughput
+#   ./benchmark-parallel.sh --compare
 # 
 # Features:
 # - Submit concurrent transactions to Arcology
@@ -17,124 +19,168 @@
 # - Compare parallel vs sequential execution
 ###############################################################################
 
+set -e
+
 # Default configuration
 TRANSACTIONS=10000
-PARALLEL=true
-CONTRACT="EncryptedSwap"
-ARCOLOGY_RPC="http://localhost:8545"
+USERS=100
+PRESET=""
+MODE="run"
+PATTERN="user_isolated"
+TYPE="mixed"
+VERBOSE=""
+EXPORT=""
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
   case $1 in
-    --transactions)
+    --transactions|-t)
       TRANSACTIONS="$2"
       shift 2
       ;;
-    --parallel)
-      PARALLEL="$2"
+    --users|-u)
+      USERS="$2"
       shift 2
       ;;
-    --contract)
-      CONTRACT="$2"
+    --preset)
+      PRESET="$2"
       shift 2
       ;;
-    --rpc)
-      ARCOLOGY_RPC="$2"
+    --compare)
+      MODE="compare"
+      shift
+      ;;
+    --generate)
+      MODE="generate"
+      shift
+      ;;
+    --pattern|-p)
+      PATTERN="$2"
       shift 2
+      ;;
+    --type)
+      TYPE="$2"
+      shift 2
+      ;;
+    --verbose|-v)
+      VERBOSE="--verbose"
+      shift
+      ;;
+    --export)
+      EXPORT="--export $2"
+      shift 2
+      ;;
+    --help|-h)
+      echo "Usage: $0 [OPTIONS]"
+      echo ""
+      echo "Options:"
+      echo "  --transactions, -t <num>   Number of transactions (default: 10000)"
+      echo "  --users, -u <num>          Number of test users (default: 100)"
+      echo "  --preset <name>            Use preset configuration"
+      echo "  --compare                  Compare parallel vs sequential"
+      echo "  --generate                 Generate batch without executing"
+      echo "  --pattern, -p <type>       Batch pattern (default: user_isolated)"
+      echo "  --type <type>              Transaction type (default: mixed)"
+      echo "  --verbose, -v              Enable verbose output"
+      echo "  --export <path>            Export results to JSON"
+      echo "  --help, -h                 Show this help message"
+      echo ""
+      echo "Presets:"
+      echo "  quick                      100 transactions, 10 users"
+      echo "  moderate                   1,000 transactions, 50 users"
+      echo "  high-throughput            10,000 transactions, 100 users"
+      echo "  stress                     15,000 transactions, 200 users"
+      echo "  conflict                   1,000 transactions with contention"
+      echo ""
+      exit 0
       ;;
     *)
       echo "Unknown option: $1"
+      echo "Use --help for usage information"
       exit 1
       ;;
   esac
 done
 
 echo "======================================================================"
-echo "Arcology Parallel Execution Benchmark"
+echo "🚀 Arcology Parallel Execution Benchmark"
 echo "======================================================================"
 echo ""
-echo "Configuration:"
-echo "  Transactions: $TRANSACTIONS"
-echo "  Parallel Mode: $PARALLEL"
-echo "  Contract: $CONTRACT"
-echo "  Arcology RPC: $ARCOLOGY_RPC"
-echo "  Target TPS: 10,000-15,000"
+echo "Shadow Economy Smart Contracts"
+echo "Target: 10,000-15,000 TPS on Arcology"
 echo ""
 echo "======================================================================"
 echo ""
 
-# Check if Arcology is running
-echo "🔍 Checking Arcology connection..."
-CHAIN_ID=$(curl -s -X POST $ARCOLOGY_RPC \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}' | jq -r '.result')
-
-if [ -z "$CHAIN_ID" ]; then
-  echo "❌ ERROR: Cannot connect to Arcology at $ARCOLOGY_RPC"
-  exit 1
+# Check dependencies
+if ! command -v node &> /dev/null; then
+    echo "❌ ERROR: Node.js is not installed"
+    exit 1
 fi
 
-echo "✅ Connected to Arcology (Chain ID: $CHAIN_ID)"
-echo ""
+# Navigate to bots directory
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+BOTS_DIR="$SCRIPT_DIR/../../bots"
 
-# TODO: Implement benchmark script
-# 
-# Steps:
-# 1. Deploy test contract to Arcology
-# 2. Generate test data for transactions
-# 3. If parallel mode:
-#    - Submit all transactions concurrently
-#    - Track submission time and confirmation time
-# 4. If sequential mode:
-#    - Submit transactions one by one
-#    - Wait for each confirmation
-# 5. Calculate metrics:
-#    - TPS = transactions / total_time
-#    - Conflict rate = conflicts / transactions
-#    - Average gas cost
-#    - Average confirmation time
-# 6. Output results
+if [ ! -d "$BOTS_DIR" ]; then
+    echo "❌ ERROR: Bots directory not found at $BOTS_DIR"
+    exit 1
+fi
 
-echo "📝 TODO: Benchmark implementation"
-echo ""
-echo "Benchmark will test:"
-echo "  1. Async nonce parallel execution"
-echo "  2. Encrypted swap throughput"
-echo "  3. Optimistic concurrency conflict detection"
-echo "  4. Gas cost comparison (parallel vs sequential)"
-echo ""
+cd "$BOTS_DIR"
 
-# Placeholder results
-echo "======================================================================"
-echo "Benchmark Results (Placeholder)"
-echo "======================================================================"
-echo ""
-echo "Transactions Submitted: $TRANSACTIONS"
-echo "Execution Mode: $PARALLEL"
-echo ""
-echo "Performance Metrics:"
-echo "  TPS: --"
-echo "  Target TPS: 10,000-15,000"
-echo "  Status: Implementation pending"
-echo ""
-echo "Concurrency Metrics:"
-echo "  Concurrent Transactions: --"
-echo "  Conflict Rate: --"
-echo "  Retries: --"
-echo ""
-echo "Gas Metrics:"
-echo "  Average Gas Price: --"
-echo "  Total Gas Used: --"
-echo "  Cost Comparison vs Ethereum: --"
+# Check if node_modules exists
+if [ ! -d "node_modules" ]; then
+    echo "📦 Installing dependencies..."
+    npm install
+    echo ""
+fi
+
+# Build command
+CMD="node src/arcology/benchmark-cli.js $MODE"
+
+if [ -n "$PRESET" ]; then
+    CMD="$CMD --preset $PRESET"
+else
+    CMD="$CMD --transactions $TRANSACTIONS --users $USERS"
+fi
+
+if [ "$MODE" = "run" ]; then
+    CMD="$CMD --pattern $PATTERN --type $TYPE"
+fi
+
+if [ -n "$VERBOSE" ]; then
+    CMD="$CMD $VERBOSE"
+fi
+
+if [ -n "$EXPORT" ]; then
+    CMD="$CMD $EXPORT"
+fi
+
+echo "🔧 Configuration:"
+if [ -n "$PRESET" ]; then
+    echo "  Preset:        $PRESET"
+else
+    echo "  Transactions:  $TRANSACTIONS"
+    echo "  Users:         $USERS"
+    echo "  Pattern:       $PATTERN"
+    echo "  Type:          $TYPE"
+fi
+echo "  Mode:          $MODE"
 echo ""
 echo "======================================================================"
 echo ""
-echo "Next Steps:"
-echo "  1. Implement transaction generation"
-echo "  2. Add parallel submission logic"
-echo "  3. Track Arcology block confirmations"
-echo "  4. Calculate real-time TPS"
-echo "  5. Monitor optimistic concurrency conflicts"
+
+# Execute benchmark
+echo "▶️  Starting benchmark..."
+echo ""
+
+eval $CMD
+
+echo ""
+echo "======================================================================"
+echo "✅ Benchmark Complete"
+echo "======================================================================"
 echo ""
 
 exit 0
