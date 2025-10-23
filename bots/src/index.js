@@ -39,23 +39,27 @@ async function initializeBots() {
     
     // Initialize Telegram bot (EVVM Fisher relay)
     console.log('📱 Starting Telegram EVVM Fisher bot...');
-    await initTelegramBot();
-    console.log('✅ Telegram bot running\n');
+    try {
+      await initTelegramBot();
+      console.log('✅ Telegram bot running\n');
+    } catch (telegramError) {
+      console.error('⚠️  Telegram bot failed to start:', telegramError.message);
+      console.log('   Continuing without Telegram...\n');
+    }
     
-    // Initialize WhatsApp bot (EVVM Fisher relay)
-    console.log('💬 Starting WhatsApp EVVM Fisher bot...');
-    await initWhatsAppBot();
-    console.log('✅ WhatsApp bot running\n');
+    // Skip WhatsApp for now
+    console.log('💬 WhatsApp bot: Skipped\n');
     
     console.log('=' .repeat(70));
-    console.log('🚀 All systems operational - Shadow Economy EVVM Fisher bots ready!');
+    console.log('🚀 System operational - Shadow Economy EVVM ready!');
     console.log('=' .repeat(70));
     console.log('\n📊 System Status:');
-    console.log('   ✅ EVVM Fisher Bots: Active (WhatsApp, Telegram)');
+    console.log('   ⚠️  Telegram Bot: Check status above');
     console.log('   ✅ Arcology Blockchain: Connected (10k-15k TPS)');
     console.log('   ✅ EVVM Native: Ready (metadata encryption)');
-    console.log('\n🎯 Data Flow:');
-    console.log('   User → EVVM Fisher (EIP-191) → EVVM (encrypt) → Arcology (execute)');
+    console.log('\n🎯 Bot Info:');
+    console.log('   Bot Username: @ShadowNox_BOT');
+    console.log('   Try /start in Telegram to test!');
     console.log('\n📡 Monitoring for encrypted transaction intents...\n');
     
   } catch (error) {

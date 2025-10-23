@@ -61,7 +61,8 @@ export function getTradeKeyboard() {
       { text: '📈 Market Info', callback_data: 'trade_market_info' },
     ],
     [
-      { text: '⬅️ Back to Dashboard', callback_data: 'nav_back_prev' },
+      { text: '⬅️ Back', callback_data: 'nav_back_prev' },
+      { text: '🏠 Home', callback_data: 'nav_home' },
     ],
   ];
 }
@@ -80,7 +81,8 @@ export function getQuickSwapKeyboard() {
       { text: 'X USDT → ETH', callback_data: 'quick_swap_usdt_eth_custom' },
     ],
     [
-      { text: '⬅️ Back to Trade', callback_data: 'nav_back_prev' },
+      { text: '⬅️ Back', callback_data: 'nav_back_prev' },
+      { text: '🏠 Home', callback_data: 'nav_home' },
     ],
   ];
 }
@@ -98,7 +100,8 @@ export function getCustomSwapKeyboard() {
       { text: 'Select To Token', callback_data: 'custom_swap_to' },
     ],
     [
-      { text: '⬅️ Back to Trade', callback_data: 'nav_back_prev' },
+      { text: '⬅️ Back', callback_data: 'nav_back_prev' },
+      { text: '🏠 Home', callback_data: 'nav_home' },
     ],
   ];
 }
@@ -372,7 +375,7 @@ export async function handleTradeNavigation(ctx, data, pushView, popView, userSt
           inline_keyboard: [
             [ { text: '🔄 New Trade', callback_data: 'nav_trade' } ],
             [ { text: '📊 View Portfolio', callback_data: 'nav_portfolio' } ],
-            [ { text: '🏠 Dashboard', callback_data: 'nav_back_prev' } ]
+            [ { text: '🏠 Home', callback_data: 'nav_home' } ]
           ]
         };
         pushView(text, markup);

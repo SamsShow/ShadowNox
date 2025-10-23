@@ -13,7 +13,8 @@ export function getLendKeyboard() {
       { text: '📈 Pool Info', callback_data: 'lend_pool_info' },
     ],
     [
-      { text: '⬅️ Back to Dashboard', callback_data: 'nav_back_prev' },
+      { text: '⬅️ Back', callback_data: 'nav_back_prev' },
+      { text: '🏠 Home', callback_data: 'nav_home' },
     ],
   ];
 }
@@ -32,7 +33,8 @@ export function getQuickLendKeyboard() {
       { text: 'Lend 1 ETH', callback_data: 'quick_lend_1_eth' },
     ],
     [
-      { text: '⬅️ Back to Lend', callback_data: 'nav_back_prev' },
+      { text: '⬅️ Back', callback_data: 'nav_back_prev' },
+      { text: '🏠 Home', callback_data: 'nav_home' },
     ],
   ];
 }
@@ -50,7 +52,8 @@ export function getCustomLendKeyboard() {
       { text: 'Select Duration', callback_data: 'custom_lend_duration' },
     ],
     [
-      { text: '⬅️ Back to Lend', callback_data: 'nav_back_prev' },
+      { text: '⬅️ Back', callback_data: 'nav_back_prev' },
+      { text: '🏠 Home', callback_data: 'nav_home' },
     ],
   ];
 }
@@ -313,7 +316,7 @@ export async function handleLendNavigation(ctx, data, pushView, popView, userSta
           inline_keyboard: [
             [ { text: '🏦 New Lend', callback_data: 'nav_lend' } ],
             [ { text: '📊 View Portfolio', callback_data: 'nav_portfolio' } ],
-            [ { text: '🏠 Dashboard', callback_data: 'nav_back_prev' } ]
+            [ { text: '🏠 Home', callback_data: 'nav_home' } ]
           ]
         };
         pushView(text, markup);

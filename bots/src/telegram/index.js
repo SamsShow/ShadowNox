@@ -129,14 +129,30 @@ export async function initTelegramBot() {
     const popView = () => {
       return stateManager.popView(chatId);
     };
+    
+    const goHome = () => {
+      const userWallet = userWalletManager.getOrCreateUserWallet(userId);
+      const dashboardText = getDashboardText(userWallet);
+      const markup = { inline_keyboard: getDashboardKeyboard() };
+      stateManager.resetViewStack(chatId, { text: dashboardText, markup });
+      return { text: dashboardText, markup };
+    };
 
     try {
+      // Handle global home navigation
+      if (data === 'nav_home') {
+        await ctx.answerCbQuery();
+        const home = goHome();
+        await ctx.editMessageText(home.text, { parse_mode: 'Markdown', reply_markup: home.markup });
+        return;
+      }
+      
       // Try each handler in order
       let handled = false;
       
       // Dashboard handler
       if (!handled) {
-        handled = await handleDashboardNavigation(ctx, data, pushView, popView);
+        handled = await handleDashboardNavigation(ctx, data, pushView, popView, goHome);
       }
       
       // Trade handler
@@ -221,13 +237,29 @@ export async function initTelegramBot() {
   // Error handler
   telegramBot.catch((err, ctx) => {
     console.error('Telegram bot error:', err);
-    ctx.reply('❌ An error occurred. Please try again later.');
+    if (ctx && ctx.reply) {
+      ctx.reply('❌ An error occurred. Please try again later.');
+    }
   });
 
-  // Launch the bot
-  await telegramBot.launch();
-  
-  console.log('✅ Telegram bot is running!');
+  // Launch the bot with timeout and polling options
+  console.log('🔄 Launching Telegram bot...');
+  try {
+    await Promise.race([
+      telegramBot.launch({
+        dropPendingUpdates: true,
+        allowedUpdates: ['message', 'callback_query']
+      }),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Telegram launch timeout after 30s')), 30000)
+      )
+    ]);
+    console.log('✅ Telegram bot is running!');
+    console.log('   Bot username: @ShadowNox_BOT');
+  } catch (error) {
+    console.error('❌ Failed to launch Telegram bot:', error.message);
+    throw error;
+  }
   
   return telegramBot;
 }

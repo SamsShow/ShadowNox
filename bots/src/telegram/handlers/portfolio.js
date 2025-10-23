@@ -13,7 +13,8 @@ export function getPortfolioKeyboard() {
       { text: '🔄 Refresh', callback_data: 'portfolio_refresh' },
     ],
     [
-      { text: '⬅️ Back to Dashboard', callback_data: 'nav_back_prev' },
+      { text: '⬅️ Back', callback_data: 'nav_back_prev' },
+      { text: '🏠 Home', callback_data: 'nav_home' },
     ],
   ];
 }
@@ -47,13 +48,30 @@ export async function handlePortfolioNavigation(ctx, data, pushView, popView) {
           const markup = { inline_keyboard: [ [ { text: '⬅️ Back to Portfolio', callback_data: 'nav_back_prev' } ] ] };
           pushView(text, markup);
           await ctx.editMessageText(text, { reply_markup: markup });
+        } else if (portfolio.positions.length === 0) {
+          const text = `📊 Active Positions\n\n*No positions yet!*\n\nStart by:\n• Making a swap (Trade menu)\n• Lending assets (Lend menu)\n\nAll your positions will appear here.`;
+          const markup = { inline_keyboard: [ 
+            [ { text: '🔄 New Trade', callback_data: 'nav_trade' } ],
+            [ { text: '🏦 New Lend', callback_data: 'nav_lend' } ],
+            [ { text: '⬅️ Back to Portfolio', callback_data: 'nav_back_prev' } ] 
+          ] };
+          pushView(text, markup);
+          await ctx.editMessageText(text, { parse_mode: 'Markdown', reply_markup: markup });
         } else {
-          const positionsText = portfolio.positions.map(pos => 
-            `• ${pos.type.toUpperCase()}: ${pos.amount} ${pos.token || pos.from} → ${pos.to || pos.duration + ' days'} (${pos.status})`
-          ).join('\n');
+          const positionsText = portfolio.positions.map((pos, idx) => {
+            if (pos.type === 'swap') {
+              return `${idx + 1}. **SWAP**: ${pos.amount} ${pos.from} → ${pos.estimatedOutput} ${pos.to}\n   Status: ${pos.status} | TX: \`${pos.txHash.substring(0, 10)}...\``;
+            } else if (pos.type === 'lend') {
+              return `${idx + 1}. **LEND**: ${pos.amount} ${pos.token} for ${pos.duration} days\n   APY: ${pos.apy} | Status: ${pos.status} | TX: \`${pos.txHash.substring(0, 10)}...\``;
+            }
+            return `${idx + 1}. ${pos.type}: ${pos.amount}`;
+          }).join('\n\n');
           
-          const text = `📊 Active Positions\n\n**Current Positions:**\n${positionsText}\n\n**Total Value:** ${portfolio.totalValue}\n\n*Positions encrypted via EVVM Native*\n*Data stored off-chain (IPFS/Arweave)*`;
-          const markup = { inline_keyboard: [ [ { text: '⬅️ Back to Portfolio', callback_data: 'nav_back_prev' } ] ] };
+          const text = `📊 Your Positions\n\n${positionsText}\n\n**Summary:**\n• Total Positions: ${portfolio.totalPositions}\n• Active Loans: ${portfolio.activeLoans}\n• Completed Swaps: ${portfolio.completedSwaps}\n• Total Value: ${portfolio.totalValue}\n\n*All data encrypted via EVVM Native*`;
+          const markup = { inline_keyboard: [ 
+            [ { text: '🔄 Refresh', callback_data: 'portfolio_refresh' } ],
+            [ { text: '⬅️ Back to Portfolio', callback_data: 'nav_back_prev' } ] 
+          ] };
           pushView(text, markup);
           await ctx.editMessageText(text, { parse_mode: 'Markdown', reply_markup: markup });
         }

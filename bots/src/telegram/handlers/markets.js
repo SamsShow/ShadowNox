@@ -16,7 +16,8 @@ export function getMarketsKeyboard() {
       { text: '📱 Subscribe', callback_data: 'markets_subscribe' },
     ],
     [
-      { text: '⬅️ Back to Dashboard', callback_data: 'nav_back_prev' },
+      { text: '⬅️ Back', callback_data: 'nav_back_prev' },
+      { text: '🏠 Home', callback_data: 'nav_home' },
     ],
   ];
 }
@@ -35,7 +36,8 @@ export function getAlertsKeyboard() {
       { text: '❌ Disable All', callback_data: 'alert_disable_all' },
     ],
     [
-      { text: '⬅️ Back to Dashboard', callback_data: 'nav_back_prev' },
+      { text: '⬅️ Back', callback_data: 'nav_back_prev' },
+      { text: '🏠 Home', callback_data: 'nav_home' },
     ],
   ];
 }
