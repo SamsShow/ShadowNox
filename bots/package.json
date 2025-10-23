@@ -9,7 +9,15 @@
     "start": "node src/index.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "lint": "eslint src --ext .js",
-    "lint:fix": "eslint src --ext .js --fix"
+    "lint:fix": "eslint src --ext .js --fix",
+    "benchmark:arcology": "node src/arcology/benchmark-cli.js run",
+    "benchmark:quick": "node src/arcology/benchmark-cli.js run --preset quick",
+    "benchmark:moderate": "node src/arcology/benchmark-cli.js run --preset moderate",
+    "benchmark:high": "node src/arcology/benchmark-cli.js run --preset high-throughput",
+    "benchmark:stress": "node src/arcology/benchmark-cli.js run --preset stress",
+    "benchmark:compare": "node src/arcology/benchmark-cli.js compare",
+    "benchmark:generate": "node src/arcology/benchmark-cli.js generate",
+    "benchmark:presets": "node src/arcology/benchmark-cli.js presets"
   },
   "keywords": [
     "whatsapp",
@@ -22,6 +30,7 @@
   "license": "MIT",
   "dependencies": {
     "@lit-protocol/lit-node-client": "^6.0.0",
+    "commander": "^11.1.0",
     "dotenv": "^16.4.1",
     "ethers": "^6.10.0",
     "qrcode-terminal": "^0.12.0",
