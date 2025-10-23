@@ -1,0 +1,33 @@
+{
+  "1062372520": {
+    "positions": [
+      {
+        "type": "lend",
+        "token": "USDC",
+        "amount": "100",
+        "duration": "30",
+        "apy": "5.2%",
+        "startDate": "2025-10-23T10:57:26.109Z",
+        "endDate": "2025-11-22T10:57:26.110Z",
+        "txHash": "0x944156c5c3223",
+        "status": "active",
+        "timestamp": "2025-10-23T10:57:26.109Z"
+      }
+    ],
+    "transactions": [
+      {
+        "id": "1761217046109",
+        "timestamp": "2025-10-23T10:57:26.109Z",
+        "type": "lend",
+        "token": "USDC",
+        "amount": "100",
+        "duration": "30",
+        "apy": "5.2%",
+        "txHash": "0x944156c5c3223",
+        "blockNumber": 1020290,
+        "status": "active"
+      }
+    ],
+    "createdAt": "2025-10-23T10:57:14.189Z"
+  }
+}

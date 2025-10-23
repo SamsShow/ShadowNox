@@ -5,6 +5,7 @@ import { getCurrentPrice, updateOnChainPrices } from '../oracle/pythHermes.js';
 import { constructFisherSignature } from '../evvm/fisherSignature.js';
 import { nonceManager } from '../evvm/nonceManager.js';
 import { userWalletManager } from './userWalletManager.js';
+import { portfolioManager } from './portfolioManager.js';
 
 export async function processSwapIntent(userId, swapData) {
   console.log(`🔄 Processing swap intent for user ${userId}:`, swapData);
@@ -91,6 +92,18 @@ export async function processSwapIntent(userId, swapData) {
     console.log('🔓 Step 6: EVVM Fisher Bot - Processing result');
     const decryptedResult = JSON.parse(encryptedMetadata.encryptedString);
     
+    // Save transaction to portfolio
+    portfolioManager.addTransaction(userId, {
+      type: 'swap',
+      from: swapData.from,
+      to: swapData.to,
+      amount: swapData.amount,
+      estimatedOutput: priceData?.estimatedOutput || 'N/A',
+      txHash: mockTxHash,
+      blockNumber: mockBlockNumber,
+      status: 'completed'
+    });
+    
     return {
       success: true,
       txHash: mockTxHash,
@@ -116,8 +129,10 @@ export async function processLendIntent(userId, lendData) {
   console.log(`🏦 Processing lend intent for user ${userId}:`, lendData);
   
   try {
-    // Get user's personal wallet
+    // Get user's personal wallet with provider
     const userWallet = userWalletManager.getOrCreateUserWallet(userId);
+    const provider = getArcologyProvider();
+    const connectedUserWallet = userWallet.connect(provider);
     console.log(`👤 Using personal wallet for user ${userId}: ${userWallet.address}`);
     
     // Step 1: EVVM Fisher Bot - Intent parsing + EIP-191 signature
@@ -137,23 +152,17 @@ export async function processLendIntent(userId, lendData) {
       accessControlConditions: []
     };
     
-    console.log('⛓️ Step 3: Arcology - Executing contract in parallel');
+    console.log('⛓️ Step 3: Arcology - Simulating contract execution');
     const asyncNonce = await nonceManager.getNextAsyncNonce(userId);
     
-    const swapContract = getEncryptedSwapContract().connect(userWallet);
+    // Note: For demo, we're not actually sending a transaction to save gas
+    // In production, uncomment the lines below:
+    // const lendContract = getEncryptedSwapContract().connect(connectedUserWallet);
+    // const encryptedBytes = ethers.toUtf8Bytes(encryptedMetadata.encryptedString);
+    // const tx = await lendContract.submitLendIntent(encryptedBytes, asyncNonce, { gasLimit: 5000000 });
+    // await tx.wait();
     
-    // Convert JSON string to bytes for contract
-    const encryptedBytes = ethers.toUtf8Bytes(encryptedMetadata.encryptedString);
-    
-    const tx = await swapContract.submitSwapIntent(
-      encryptedBytes,
-      asyncNonce,
-      {
-        gasLimit: 5000000
-      }
-    );
-    
-    console.log('📡 Lend intent submitted to EVVM Fisher Bot');
+    console.log('📡 Lend intent processed by EVVM Fisher Bot');
     
     console.log('📊 Step 4: EVVM Fisher - Processing price feeds');
     
@@ -193,6 +202,18 @@ export async function processLendIntent(userId, lendData) {
     
     console.log('🔓 Step 6: EVVM Fisher Bot - Processing result');
     const decryptedResult = JSON.parse(encryptedMetadata.encryptedString);
+    
+    // Save transaction to portfolio
+    portfolioManager.addTransaction(userId, {
+      type: 'lend',
+      token: lendData.token,
+      amount: lendData.amount,
+      duration: lendData.duration,
+      apy: '5.2%',
+      txHash: mockTxHash,
+      blockNumber: mockBlockNumber,
+      status: 'active'
+    });
     
     return {
       success: true,
@@ -247,29 +268,28 @@ export async function getTransactionStatus(txHash) {
 
 export async function getUserPortfolio(userId) {
   try {
-    // Query ShadowVault contract for user's encrypted positions
+    // Get portfolio from portfolio manager
+    const positions = portfolioManager.getAllPositions(userId);
+    const summary = portfolioManager.getPortfolioSummary(userId);
+    
+    if (positions.length === 0) {
+      return {
+        positions: [],
+        totalValue: '$0.00',
+        encrypted: true,
+        message: 'No positions yet. Start by making a swap or lending!'
+      };
+    }
+    
     return {
-      positions: [
-        {
-          type: 'swap',
-          from: 'ETH',
-          to: 'USDC',
-          amount: '1',
-          status: 'completed',
-          txHash: '0x123...',
-          encrypted: true
-        },
-        {
-          type: 'lend',
-          token: 'USDC',
-          amount: '100',
-          duration: '30',
-          status: 'active',
-          txHash: '0x456...',
-          encrypted: true
-        }
-      ],
-      totalValue: '$3,500',
+      positions: positions.map(pos => ({
+        ...pos,
+        encrypted: true
+      })),
+      totalValue: `$${summary.totalValue}`,
+      totalPositions: summary.totalPositions,
+      activeLoans: summary.activeLoans,
+      completedSwaps: summary.completedSwaps,
       encrypted: true
     };
   } catch (error) {
