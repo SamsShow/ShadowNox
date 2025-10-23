@@ -364,6 +364,12 @@ export async function handleTradeNavigation(ctx, data, pushView, popView, userSt
         const state = userStates.get(userId);
         const swap = state?.swap || {};
         
+        // Show processing message
+        await ctx.editMessageText('⏳ Processing swap...\n\nThis may take a moment...', { parse_mode: 'Markdown' });
+        
+        // Add 1-2 second delay for better UX
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
         // Import the EVVM Fisher flow processor
         const { processSwapIntent } = await import('../evvmFisherFlow.js');
         

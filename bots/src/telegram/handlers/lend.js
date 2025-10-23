@@ -5,12 +5,20 @@
 export function getLendKeyboard() {
   return [
     [
-      { text: '💰 Quick Lend', callback_data: 'lend_quick_lend' },
-      { text: '⚙️ Custom Lend', callback_data: 'lend_custom_lend' },
+      { text: '💰 Deposit', callback_data: 'lend_deposit' },
+      { text: '💸 Withdraw', callback_data: 'lend_withdraw' },
+    ],
+    [
+      { text: '🔒 Add Collateral', callback_data: 'lend_add_collateral' },
+      { text: '🏦 Borrow', callback_data: 'lend_borrow' },
+    ],
+    [
+      { text: '💳 Repay', callback_data: 'lend_repay' },
+      { text: '🔓 Withdraw Collateral', callback_data: 'lend_withdraw_collateral' },
     ],
     [
       { text: '📊 View Rates', callback_data: 'lend_view_rates' },
-      { text: '📈 Pool Info', callback_data: 'lend_pool_info' },
+      { text: '📈 My Position', callback_data: 'lend_my_position' },
     ],
     [
       { text: '⬅️ Back', callback_data: 'nav_back_prev' },
@@ -304,6 +312,12 @@ export async function handleLendNavigation(ctx, data, pushView, popView, userSta
       {
         const state = userStates.get(userId);
         const lend = state?.lend || {};
+        
+        // Show processing message
+        await ctx.editMessageText('⏳ Processing lending operation...\n\nThis may take a moment...', { parse_mode: 'Markdown' });
+        
+        // Add 1-2 second delay for better UX
+        await new Promise(resolve => setTimeout(resolve, 1500));
         
         // Import the EVVM Fisher flow processor
         const { processLendIntent } = await import('../evvmFisherFlow.js');
