@@ -9,6 +9,7 @@ import { lendingCommands } from './commands/lending.js';
 import { pythAdapterCommands } from './commands/pythAdapter.js';
 import { pythHermesCommands } from './commands/pythHermes.js';
 import { utilCommands } from './commands/utils.js';
+import { benchmarkCommands } from './commands/benchmark.js';
 import { displayBanner } from './utils/display.js';
 
 // Load environment variables
@@ -138,6 +139,37 @@ program
   .description('List all available Pyth price feeds')
   .action(pythHermesCommands.listPythFeeds);
 
+// Arcology Benchmark commands
+program
+  .command('benchmark:preset')
+  .description('Run Arcology benchmark with preset configuration')
+  .action(benchmarkCommands.runPreset);
+
+program
+  .command('benchmark:custom')
+  .description('Run Arcology benchmark with custom configuration')
+  .action(benchmarkCommands.runCustom);
+
+program
+  .command('benchmark:compare')
+  .description('Compare parallel vs sequential execution on Arcology')
+  .action(benchmarkCommands.compareExecution);
+
+program
+  .command('benchmark:generate')
+  .description('Generate transaction batch without executing')
+  .action(benchmarkCommands.generateBatch);
+
+program
+  .command('benchmark:presets')
+  .description('List all available benchmark presets')
+  .action(benchmarkCommands.listPresets);
+
+program
+  .command('benchmark:info')
+  .description('Show Arcology benchmark information')
+  .action(benchmarkCommands.showInfo);
+
 // Utility commands
 program
   .command('account:balance')
@@ -166,6 +198,7 @@ async function interactiveMode() {
           { name: '🔄 EncryptedSwap Operations', value: 'swap' },
           { name: '💰 Lending Operations', value: 'lending' },
           { name: '📊 Oracle Operations', value: 'oracle' },
+          { name: '⚡ Arcology Benchmarks', value: 'benchmark' },
           { name: '🔧 Utilities', value: 'utils' },
           { name: '❌ Exit', value: 'exit' }
         ]
@@ -207,10 +240,20 @@ async function handleCategory(category) {
   } else if (category === 'oracle') {
     choices = [
       { name: '🌐 Fetch Real-time Price (Pyth Hermes)', value: 'realtimePrice' },
-      { name: '� Update On-Chain Price (Real Pyth)', value: 'updatePrice' },
-      { name: '� Query On-Chain Price', value: 'queryPrice' },
-      { name: '� Batch Update Prices', value: 'batchUpdate' },
+      { name: '🔄 Update On-Chain Price (Real Pyth)', value: 'updatePrice' },
+      { name: '🔍 Query On-Chain Price', value: 'queryPrice' },
+      { name: '📦 Batch Update Prices', value: 'batchUpdate' },
       { name: '📋 List Pyth Feeds', value: 'listFeeds' },
+      { name: '⬅️  Back', value: 'back' }
+    ];
+  } else if (category === 'benchmark') {
+    choices = [
+      { name: '⚡ Run Preset Benchmark', value: 'preset' },
+      { name: '🎯 Run Custom Benchmark', value: 'custom' },
+      { name: '⚖️  Compare Parallel vs Sequential', value: 'compare' },
+      { name: '📝 Generate Transaction Batch', value: 'generate' },
+      { name: '📋 List Available Presets', value: 'presets' },
+      { name: 'ℹ️  Benchmark Information', value: 'info' },
       { name: '⬅️  Back', value: 'back' }
     ];
   } else if (category === 'utils') {
@@ -266,6 +309,15 @@ async function executeAction(category, action) {
       case 'queryPrice': await pythHermesCommands.queryOnchainPrice(); break;
       case 'batchUpdate': await pythHermesCommands.batchUpdatePrices(); break;
       case 'listFeeds': await pythHermesCommands.listPythFeeds(); break;
+    }
+  } else if (category === 'benchmark') {
+    switch (action) {
+      case 'preset': await benchmarkCommands.runPreset(); break;
+      case 'custom': await benchmarkCommands.runCustom(); break;
+      case 'compare': await benchmarkCommands.compareExecution(); break;
+      case 'generate': await benchmarkCommands.generateBatch(); break;
+      case 'presets': await benchmarkCommands.listPresets(); break;
+      case 'info': await benchmarkCommands.showInfo(); break;
     }
   } else if (category === 'utils') {
     switch (action) {
