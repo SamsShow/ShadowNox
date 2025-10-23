@@ -54,3 +54,5 @@ artifacts/
 # Deployment artifacts
 .env.arcology
 deployments.json
+# Generated benchmark example files
+bots/examples/*.json
