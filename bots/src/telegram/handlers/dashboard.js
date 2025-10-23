@@ -59,7 +59,7 @@ export function formatEth(wei) {
 /**
  * Handle dashboard navigation
  */
-export async function handleDashboardNavigation(ctx, data, pushView, popView) {
+export async function handleDashboardNavigation(ctx, data, pushView, popView, goHome) {
   const inline_keyboard = getDashboardKeyboard();
   const userId = String(ctx.from.id);
   const userWallet = userWalletManager.getOrCreateUserWallet(userId);
@@ -72,18 +72,8 @@ export async function handleDashboardNavigation(ctx, data, pushView, popView) {
         const balanceWei = provider ? await provider.getBalance(userWallet.address) : 0n;
         const balanceEth = formatEth(balanceWei);
         
-        // Get network info
-        let networkInfo = 'Unknown Network';
-        try {
-          const network = provider ? await provider.getNetwork() : null;
-          if (network) {
-            if (network.chainId === 118n) {
-              networkInfo = 'Arcology Testnet (Chain ID: 118)';
-            }  else {
-              networkInfo = `Chain ID: ${network.chainId}`;
-            }
-          }
-        } catch {}
+        // Always show Arcology Testnet
+        const networkInfo = 'Arcology Testnet (Chain ID: 118)';
         
         const text = `💼 Your Personal Wallet\n\n**Your Address:**\n\`${userWallet.address}\`\n\n**Balance:** ${balanceEth} ETH\n**Network:** ${networkInfo}\n\n**Actions:**\n- Send funds to this address\n- Use Trade to submit intents\n- All transactions are private to you`;
         const markup = { inline_keyboard: [ ...inline_keyboard, [ { text: '⬅️ Back', callback_data: 'nav_back_prev' } ] ] };
@@ -131,7 +121,13 @@ export async function handleDashboardNavigation(ctx, data, pushView, popView) {
       await ctx.answerCbQuery();
       {
         const prev = popView();
-        await ctx.editMessageText(prev.text, { parse_mode: 'Markdown', reply_markup: prev.markup });
+        if (prev && prev.text) {
+          await ctx.editMessageText(prev.text, { parse_mode: 'Markdown', reply_markup: prev.markup });
+        } else {
+          // Fallback to dashboard using goHome
+          const home = goHome();
+          await ctx.editMessageText(home.text, { parse_mode: 'Markdown', reply_markup: home.markup });
+        }
       }
       break;
 

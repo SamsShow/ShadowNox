@@ -31,8 +31,8 @@ export async function initArcologyConnector() {
   
   const network = await arcologyProvider.getNetwork();
   console.log('✅ Connected to Arcology parallel blockchain');
-  console.log(`   Network: ${network.name || 'Arcology DevNet'}`);
-  console.log(`   Chain ID: ${network.chainId.toString()}`);
+  console.log(`   Network: Arcology Testnet`);
+  console.log(`   Chain ID: 118`);
   console.log(`   Expected TPS: 10,000-15,000`);
   
   if (!process.env.BOT_PRIVATE_KEY) {
